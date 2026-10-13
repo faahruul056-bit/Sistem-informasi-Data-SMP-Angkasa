@@ -10,6 +10,7 @@
   <script>
     let currentSession = JSON.parse(localStorage.getItem('sidsa_session_v10'));
     
+    // Validasi sesi: jika belum login, kembalikan ke halaman login.html
     if (!currentSession || !currentSession.role || !currentSession.user) {
       alert("Sesi Anda telah berakhir atau belum login. Silakan masuk kembali.");
       window.location.href = 'login.html';
@@ -184,7 +185,79 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzbm32qpcrKLISaP-ElVpIbGrGcGtlSPizPzNjGbA7dSt8rgdh-FjcWmyRq7UXDmpWZ/exec";
+    // URL WEB APP GOOGLE APPS SCRIPT DATABASE
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyK1X4If9XPwXeSzNig4bvCTOS8iNsb5LuNmqwVYTqoSckVSr6ozMOqDBYfJklIZwvpLA/exec";
+
+    function syncToGoogleSheet(schoolObj, tahunAjaranStr) {
+      if (!schoolObj) return;
+
+      const totSiswa = (schoolObj.siswa.k7L + schoolObj.siswa.k7P) + (schoolObj.siswa.k8L + schoolObj.siswa.k8P) + (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
+      const totRombel = schoolObj.siswa.r7 + schoolObj.siswa.r8 + schoolObj.siswa.r9;
+      
+      const u7 = schoolObj.keuangan?.siswaUmum7 ?? (schoolObj.siswa.k7L + schoolObj.siswa.k7P);
+      const u8 = schoolObj.keuangan?.siswaUmum8 ?? (schoolObj.siswa.k8L + schoolObj.siswa.k8P);
+      const u9 = schoolObj.keuangan?.siswaUmum9 ?? (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
+      const t7 = schoolObj.keuangan?.siswaTniau7 ?? 0;
+      const t8 = schoolObj.keuangan?.siswaTniau8 ?? 0;
+      const t9 = schoolObj.keuangan?.siswaTniau9 ?? 0;
+
+      const dopBln = (u7 * (schoolObj.keuangan?.dopUmum7 || 0)) + (u8 * (schoolObj.keuangan?.dopUmum8 || 0)) + (u9 * (schoolObj.keuangan?.dopUmum9 || 0))
+                   + (t7 * (schoolObj.keuangan?.dopTniau7 || 0)) + (t8 * (schoolObj.keuangan?.dopTniau8 || 0)) + (t9 * (schoolObj.keuangan?.dopTniau9 || 0));
+      const dopThn = (u7 * (schoolObj.keuangan?.dopUmumThn7 || 0)) + (u8 * (schoolObj.keuangan?.dopUmumThn8 || 0)) + (u9 * (schoolObj.keuangan?.dopUmumThn9 || 0))
+                   + (t7 * (schoolObj.keuangan?.dopTniauThn7 || 0)) + (t8 * (schoolObj.keuangan?.dopTniauThn8 || 0)) + (t9 * (schoolObj.keuangan?.dopTniauThn9 || 0));
+
+      let dopLainBln = 0, dopLainThn = 0;
+      if (schoolObj.keuangan?.dopLainnyaList && Array.isArray(schoolObj.keuangan.dopLainnyaList)) {
+        schoolObj.keuangan.dopLainnyaList.forEach(item => {
+          const nom = parseFloat(item.nominal) || 0;
+          const jS = parseInt(item.jumlahSiswa) || totSiswa;
+          if ((item.tipe || 'Bulanan') === 'Bulanan') dopLainBln += (nom * jS);
+          else dopLainThn += (nom * jS);
+        });
+      }
+
+      const totalDopBln = dopBln + dopLainBln;
+      const totalDopThn = dopThn + dopLainThn;
+      const dspG1 = (schoolObj.keuangan?.dspGel1 || 0) * (schoolObj.keuangan?.dspSiswa1 || 0);
+      const dspG2 = (schoolObj.keuangan?.dspGel2 || 0) * (schoolObj.keuangan?.dspSiswa2 || 0);
+      const dspG3 = (schoolObj.keuangan?.dspGel3 || 0) * (schoolObj.keuangan?.dspSiswa3 || 0);
+      let dspLain = 0;
+      if (schoolObj.keuangan?.dspLainnyaList && Array.isArray(schoolObj.keuangan.dspLainnyaList)) {
+        schoolObj.keuangan.dspLainnyaList.forEach(item => { dspLain += (parseFloat(item.nominal) || 0) * (parseInt(item.jumlahSiswa) || 0); });
+      }
+      const totalDSP = dspG1 + dspG2 + dspG3 + dspLain;
+      const totalRPSS = (schoolObj.keuangan?.rpssSumber01 || 0) + (schoolObj.keuangan?.rpssSumber02 || 0) + (schoolObj.keuangan?.rpssSumber03 || 0);
+      const grandTotalKas = (totalDopBln * 12) + totalDopThn + totalDSP + totalRPSS;
+
+      const payload = {
+        tahunAjaran: tahunAjaranStr,
+        npsn: schoolObj.npsn,
+        namaSekolah: schoolObj.nama,
+        cabang: schoolObj.cabang,
+        alamatSekolah: schoolObj.alamatSekolah,
+        kepalaSekolah: schoolObj.kepalaSekolah,
+        akreditasi: schoolObj.akreditasi,
+        tahunAkreditasi: schoolObj.tahunAkreditasi,
+        siswa: schoolObj.siswa,
+        pendidik: schoolObj.pendidik,
+        tendik: schoolObj.tendik,
+        grandTotalKas: grandTotalKas
+      };
+
+      fetch(GOOGLE_SHEET_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        console.log("Data berhasil disinkronkan ke Spreadsheet Google.");
+      })
+      .catch(err => {
+        console.error("Gagal sinkronisasi Google Sheet:", err);
+      });
+    }
+
     const TOTAL_SMP_ANGKASA = 15;
     let globalSearchKeyword = "";
 
@@ -230,7 +303,7 @@
           statusSKPendirian: "Belum Diisi",
           notesSKPendirian: "",
           skIzin: "-", 
-          tglSKIzin: "", 
+          tglSKIzin: "-", 
           fileSKIzin: "",
           statusSKIzin: "Belum Diisi",
           notesSKIzin: "",
@@ -300,30 +373,8 @@
 
     localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
 
-    // FUNGSI SIMPAN DB KE LOCALSTORAGE & GOOGLE SPREADSHEET ONLINE
     function saveDB() {
       localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
-
-      const activeTA = document.getElementById('filterTA')?.value || "2026-2027";
-      const payload = {
-        tahunAjaran: activeTA,
-        dbPayload: db
-      };
-
-      fetch(API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      })
-      .then(() => {
-        console.log("Sinkronisasi data ke Google Sheets berhasil.");
-      })
-      .catch(err => {
-        console.error("Gagal sinkronisasi:", err);
-      });
     }
 
     function markSchoolDataUpdated(school, moduleName, moduleKey) {
@@ -337,6 +388,11 @@
       if (moduleKey === 'pendidik') school.lastUpdatePendidik = timeStr;
       if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
       if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
+
+      // Sinkronisasi otomatis ke Google Sheet
+      const taList = Object.keys(db).sort().reverse();
+      const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
+      syncToGoogleSheet(school, currentTA);
     }
 
     function resetDataDemo() {
@@ -1332,7 +1388,7 @@
             '<span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Diperbarui: ' + s.lastUpdateKeuangan + '</span>' : 
             '<span class="text-xs font-semibold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">Belum Ada Perubahan</span>';
 
-          itemsHtml += '<div class="border border-slate-200/80 rounded-2xl p-5 space-y-4 bg-slate-50/40 shadow-sm"><div class="flex justify-between items-center border-b pb-3"><h4 class="font-bold text-brand-blue text-sm">' + s.nama + ' (NPSN:' + s.npsn + ')</h4>' + updateTag + '</div>' + formKeu + '<div class="space-y-3 text-xs"><div class="bg-white p-4 rounded-xl border shadow-sm space-y-2"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">A. Rincian DOP Bulanan & Tahunan per Siswa</span><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2"><span class="font-bold text-slate-700 block text-[11px] border-b pb-1">1. Umum / Masyarakat</span><table class="w-full text-left border-collapse text-[11px]"><thead class="border-b border-slate-300 bg-slate-200/60 font-bold text-slate-700"><tr><th class="py-1.5 px-1.5">Kls</th><th class="py-1.5 px-1.5">Bulanan</th><th class="py-1.5 px-1.5">Tahunan</th><th class="py-1.5 px-1.5 text-center">Siswa</th></tr></thead><tbody class="divide-y divide-slate-200"><tr><td class="py-1.5 px-1.5 font-semibold">VII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum7) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn7) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum7) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">VIII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum8) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn8) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum8) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">IX</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum9) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn9) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum9) + '</td></tr></tbody></table></div><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2"><span class="font-bold text-blue-800 block text-[11px] border-b pb-1">2. Anak Anggota / PNS TNI AU</span><table class="w-full text-left border-collapse text-[11px]"><thead class="border-b border-slate-300 bg-slate-200/60 font-bold text-slate-700"><tr><th class="py-1.5 px-1.5">Kls</th><th class="py-1.5 px-1.5">Bulanan</th><th class="py-1.5 px-1.5">Tahunan</th><th class="py-1.5 px-1.5 text-center">Siswa</th></tr></thead><tbody class="divide-y divide-slate-200"><tr><td class="py-1.5 px-1.5 font-semibold">VII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniau7) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn7) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau7) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">VIII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniauThn8) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn8) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau8) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">IX</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniau9) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn9) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau9) + '</td></tr></tbody></table></div><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1"><span class="font-bold text-amber-800 block text-[11px] border-b pb-1">3. DOP Lainnya (' + formatAngka(dopLainnyaList.length) + ' Kategori)</span>' + dopLainItemsHtml + '</div></div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-1"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">B. Rincian Tarif & Penerimaan DSP SPMB</span><div>• Gel I: <strong>' + formatRupiah(dspGel1) + '</strong> (' + formatAngka(dspSiswa1) + ' Siswa) = <strong>' + formatRupiah(dspGel1 * dspSiswa1) + '</strong></div><div>• Gel II: <strong>' + formatRupiah(dspGel2) + '</strong> (' + formatAngka(dspSiswa2) + ' Siswa) = <strong>' + formatRupiah(dspGel2 * dspSiswa2) + '</strong></div><div>• Gel III: <strong>' + formatRupiah(dspGel3) + '</strong> (' + formatAngka(dspSiswa3) + ' Siswa) = <strong>' + formatRupiah(dspGel3 * dspSiswa3) + '</strong></div><div class="pt-1 border-t mt-2"><span class="font-bold text-amber-800 block text-[11px] mb-1">DSP Lainnya (' + formatAngka(dspLainnyaList.length) + ' Kategori):</span>' + dspLainItemsHtml + '</div><div class="pt-1 font-bold text-brand-blue border-t mt-2">Total Estimasi Penerimaan DSP: ' + formatRupiah(totalDSP) + '</div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-1"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">C. Sumber Dana RPSS</span><div class="grid grid-cols-3 gap-2"><div>Sumber 01: <strong>' + formatRupiah(rpss01) + '</strong></div><div>Sumber 02: <strong>' + formatRupiah(rpss02) + '</strong></div><div>Sumber 03: <strong>' + formatRupiah(rpss03) + '</strong></div></div></div><div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200 space-y-1"><span class="font-bold text-emerald-900 block border-b border-emerald-200 pb-1 text-xs">D. Proyeksi Total Kas Masuk / Tahun</span><div>• DOP Bulanan (12 Bln): <strong>' + formatRupiah(totalDOPBulanan * 12) + '</strong></div><div>• DOP Tahunan (1x/Thn): <strong>' + formatRupiah(totalDOPTahunanRutin) + '</strong></div><div>• Total Sumber RPSS (01+02+03): <strong>' + formatRupiah(totalRPSS) + '</strong></div><div>• Total DSP SPMB: <strong>' + formatRupiah(totalDSP) + '</strong></div><div class="pt-2 font-black text-emerald-800 border-t text-sm">Grand Total Penerimaan: ' + formatRupiah(grandTotalKas) + '</div></div></div></div></div>';
+          itemsHtml += '<div class="border border-slate-200/80 rounded-2xl p-5 space-y-4 bg-slate-50/40 shadow-sm"><div class="flex justify-between items-center border-b pb-3"><h4 class="font-bold text-brand-blue text-sm">' + s.nama + ' (NPSN:' + s.npsn + ')</h4>' + updateTag + '</div>' + formKeu + '<div class="space-y-3 text-xs"><div class="bg-white p-4 rounded-xl border shadow-sm space-y-2"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">A. Rincian DOP Bulanan & Tahunan per Siswa</span><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2"><span class="font-bold text-slate-700 block text-[11px] border-b pb-1">1. Umum / Masyarakat</span><table class="w-full text-left border-collapse text-[11px]"><thead class="border-b border-slate-300 bg-slate-200/60 font-bold text-slate-700"><tr><th class="py-1.5 px-1.5">Kls</th><th class="py-1.5 px-1.5">Bulanan</th><th class="py-1.5 px-1.5">Tahunan</th><th class="py-1.5 px-1.5 text-center">Siswa</th></tr></thead><tbody class="divide-y divide-slate-200"><tr><td class="py-1.5 px-1.5 font-semibold">VII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum7) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn7) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum7) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">VIII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum8) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn8) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum8) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">IX</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum9) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn9) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum9) + '</td></tr></tbody></table></div><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2"><span class="font-bold text-blue-800 block text-[11px] border-b pb-1">2. Anak Anggota / PNS TNI AU</span><table class="w-full text-left border-collapse text-[11px]"><thead class="border-b border-slate-300 bg-slate-200/60 font-bold text-slate-700"><tr><th class="py-1.5 px-1.5">Kls</th><th class="py-1.5 px-1.5">Bulanan</th><th class="py-1.5 px-1.5">Tahunan</th><th class="py-1.5 px-1.5 text-center">Siswa</th></tr></thead><tbody class="divide-y divide-slate-200"><tr><td class="py-1.5 px-1.5 font-semibold">VII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniau7) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn7) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau7) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">VIII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniau8) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn8) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau8) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">IX</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniau9) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn9) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau9) + '</td></tr></tbody></table></div><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1"><span class="font-bold text-amber-800 block text-[11px] border-b pb-1">3. DOP Lainnya (' + formatAngka(dopLainnyaList.length) + ' Kategori)</span>' + dopLainItemsHtml + '</div></div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-1"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">B. Rincian Tarif & Penerimaan DSP SPMB</span><div>• Gel I: <strong>' + formatRupiah(dspGel1) + '</strong> (' + formatAngka(dspSiswa1) + ' Siswa) = <strong>' + formatRupiah(dspGel1 * dspSiswa1) + '</strong></div><div>• Gel II: <strong>' + formatRupiah(dspGel2) + '</strong> (' + formatAngka(dspSiswa2) + ' Siswa) = <strong>' + formatRupiah(dspGel2 * dspSiswa2) + '</strong></div><div>• Gel III: <strong>' + formatRupiah(dspGel3) + '</strong> (' + formatAngka(dspSiswa3) + ' Siswa) = <strong>' + formatRupiah(dspGel3 * dspSiswa3) + '</strong></div><div class="pt-1 border-t mt-2"><span class="font-bold text-amber-800 block text-[11px] mb-1">DSP Lainnya (' + formatAngka(dspLainnyaList.length) + ' Kategori):</span>' + dspLainItemsHtml + '</div><div class="pt-1 font-bold text-brand-blue border-t mt-2">Total Estimasi Penerimaan DSP: ' + formatRupiah(totalDSP) + '</div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-1"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">C. Sumber Dana RPSS</span><div class="grid grid-cols-3 gap-2"><div>Sumber 01: <strong>' + formatRupiah(rpss01) + '</strong></div><div>Sumber 02: <strong>' + formatRupiah(rpss02) + '</strong></div><div>Sumber 03: <strong>' + formatRupiah(rpss03) + '</strong></div></div></div><div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200 space-y-1"><span class="font-bold text-emerald-900 block border-b border-emerald-200 pb-1 text-xs">D. Proyeksi Total Kas Masuk / Tahun</span><div>• DOP Bulanan (12 Bln): <strong>' + formatRupiah(totalDOPBulanan * 12) + '</strong></div><div>• DOP Tahunan (1x/Thn): <strong>' + formatRupiah(totalDOPTahunanRutin) + '</strong></div><div>• Total Sumber RPSS (01+02+03): <strong>' + formatRupiah(totalRPSS) + '</strong></div><div>• Total DSP SPMB: <strong>' + formatRupiah(totalDSP) + '</strong></div><div class="pt-2 font-black text-emerald-800 border-t text-sm">Grand Total Penerimaan: ' + formatRupiah(grandTotalKas) + '</div></div></div></div></div>';
         });
       }
 
