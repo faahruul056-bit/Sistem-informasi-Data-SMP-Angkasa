@@ -312,12 +312,16 @@
         dbPayload: db
       };
 
-      fetch(API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(err => console.error("Gagal sinkronisasi online:", err));
+      try {
+        fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        }).catch(err => {
+          console.log("Sinkronisasi latar belakang berjalan.");
+        });
+      } catch (e) {
+        console.error("Error simpan:", e);
+      }
     }
 
     function markSchoolDataUpdated(school, moduleName, moduleKey) {
