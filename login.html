@@ -82,7 +82,7 @@
       <!-- Bottom Footer -->
       <div class="relative z-10 text-[11px] text-blue-300 border-t border-white/10 pt-3 flex justify-between items-center">
         <span>© 2026 Yasarini Pusat</span>
-        <span class="bg-white/10 px-2 py-0.5 rounded font-mono">v1.0.0 Online</span>
+        <span class="bg-white/10 px-2 py-0.5 rounded font-mono">v1.0.0</span>
       </div>
     </div>
 
@@ -131,7 +131,7 @@
           </div>
 
           <div class="pt-2">
-            <button type="submit" id="btnLoginSubmit" class="w-full bg-gradient-to-r from-brand-blue to-brand-blueDark hover:from-brand-blueDark hover:to-blue-900 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 text-xs">
+            <button type="submit" class="w-full bg-gradient-to-r from-brand-blue to-brand-blueDark hover:from-brand-blueDark hover:to-blue-900 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 text-xs">
               <span>Masuk ke Aplikasi</span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
@@ -140,11 +140,12 @@
 
         <!-- FORM BUAT AKUN SEKOLAH -->
         <form id="formRegister" onsubmit="handleRegister(event)" class="space-y-3.5 text-xs hidden">
+          <!-- DISCLAIMER BOKS INFO -->
           <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[11px] leading-relaxed flex gap-2 items-start">
             <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
             <div>
               <strong class="font-bold">Pemberitahuan Pendaftaran Akun:</strong>
-              <p class="mt-0.5 text-amber-700">Pendaftaran akun sekolah hanya dapat dilakukan 1 kali per NPSN. Data akan langsung tersimpan secara online ke Database Pusat.</p>
+              <p class="mt-0.5 text-amber-700">Pendaftaran akun sekolah hanya dapat dilakukan <strong>1 (satu) kali</strong> untuk setiap NPSN/Sekolah. Jika terjadi kesalahan data saat mendaftar, silakan hubungi <strong>Admin Pusat Yasarini</strong> untuk penyesuaian data.</p>
             </div>
           </div>
 
@@ -177,7 +178,7 @@
           </div>
 
           <div class="pt-2">
-            <button type="submit" id="btnRegSubmit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-xs">
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-xs">
               <i data-lucide="check-circle" class="w-4 h-4"></i>
               <span>Daftarkan Akun Sekolah</span>
             </button>
@@ -191,8 +192,6 @@
 
   <script>
     lucide.createIcons();
-
-    const API_URL = "https://script.google.com/macros/s/AKfycbzbm32qpcrKLISaP-ElVpIbGrGcGtlSPizPzNjGbA7dSt8rgdh-FjcWmyRq7UXDmpWZ/exec";
 
     const listSekolahMaster = [
       { nama: "SMP ANGKASA SOEWONDO MEDAN", lanud: "SOEWONDO MEDAN" },
@@ -227,6 +226,30 @@
       const selectedNama = document.getElementById('regNamaSelect').value;
       const found = listSekolahMaster.find(s => s.nama === selectedNama);
       document.getElementById('regCabang').value = found ? found.lanud : '';
+    }
+
+    // INISIALISASI DATABASE MURNI (TANPA FILTER HAPUS OTOMATIS)
+    function initUsersDB() {
+      let usersDB = JSON.parse(localStorage.getItem('sidsa_users_v10'));
+      
+      const defaultUsers = [
+        { user: "admin", pass: "admin123", nama: "ADMIN PUSAT YASARINI", role: "ADMIN", npsn: "PUSAT", cabang: "Pusat" },
+        { user: "pimpinan", pass: "pimpinan123", nama: "PIMPINAN YASARINI PUSAT", role: "PIMPINAN", npsn: "PUSAT", cabang: "Pusat" }
+      ];
+
+      if (!usersDB || usersDB.length === 0) {
+        usersDB = defaultUsers;
+      } else {
+        defaultUsers.forEach(def => {
+          const exists = usersDB.find(u => u.user.toLowerCase() === def.user.toLowerCase());
+          if (!exists) {
+            usersDB.push(def);
+          }
+        });
+      }
+
+      localStorage.setItem('sidsa_users_v10', JSON.stringify(usersDB));
+      return usersDB;
     }
 
     function switchTab(type) {
@@ -268,40 +291,16 @@
       lucide.createIcons();
     }
 
-    async function handleLogin(e) {
+    function handleLogin(e) {
       e.preventDefault();
       const userVal = document.getElementById('loginUser').value.trim();
       const passVal = document.getElementById('loginPass').value.trim();
-      const btn = document.getElementById('btnLoginSubmit');
 
-      btn.innerText = "Memeriksa Akun...";
-      btn.disabled = true;
-
-      const defaultUsers = [
-        { user: "admin", pass: "admin123", nama: "ADMIN PUSAT YASARINI", role: "ADMIN", npsn: "PUSAT", cabang: "Pusat" },
-        { user: "pimpinan", pass: "pimpinan123", nama: "PIMPINAN YASARINI PUSAT", role: "PIMPINAN", npsn: "PUSAT", cabang: "Pusat" }
-      ];
-
-      let allUsers = [...defaultUsers];
-
-      try {
-        const response = await fetch(`${API_URL}?action=getUsers`);
-        const usersDB = await response.json();
-        if (Array.isArray(usersDB)) {
-          allUsers = [...defaultUsers, ...usersDB];
-        }
-      } catch (error) {
-        console.warn("Gagal fetch, menggunakan mode offline:", error);
-      }
-
-      const foundUser = allUsers.find(u => {
-        const dbUser = u.user ? String(u.user).toLowerCase() : "";
-        const dbNpsn = u.npsn ? String(u.npsn) : "";
-        return dbUser === userVal.toLowerCase() || dbNpsn === userVal;
-      });
+      const usersDB = initUsersDB();
+      const foundUser = usersDB.find(u => u.user.toLowerCase() === userVal.toLowerCase() || u.npsn === userVal);
 
       if (foundUser) {
-        if (String(foundUser.pass) === String(passVal)) {
+        if (foundUser.pass === passVal) {
           localStorage.setItem('sidsa_session_v10', JSON.stringify(foundUser));
           alert('Login Berhasil! Selamat datang ' + foundUser.nama);
           window.location.href = 'index.html';
@@ -309,68 +308,53 @@
           alert('Kata sandi yang Anda masukkan salah!');
         }
       } else {
-        alert('NPSN / Username tidak ditemukan!');
+        alert('NPSN / Username tidak ditemukan! Silakan mendaftar terlebih dahulu pada tab "Buat Akun Sekolah".');
       }
-
-      btn.innerHTML = '<span>Masuk ke Aplikasi</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
-      btn.disabled = false;
-      lucide.createIcons();
     }
 
-    async function handleRegister(e) {
+    function handleRegister(e) {
       e.preventDefault();
       const nama = document.getElementById('regNamaSelect').value;
       const cabang = document.getElementById('regCabang').value;
       const npsn = document.getElementById('regNpsn').value.trim();
       const pass = document.getElementById('regPass').value.trim();
-      const btn = document.getElementById('btnRegSubmit');
 
       if (!nama) {
         alert('Silakan pilih nama sekolah terlebih dahulu!');
         return;
       }
 
-      btn.innerText = "Mendaftarkan Akun...";
-      btn.disabled = true;
+      let usersDB = initUsersDB();
+      
+      // CEK DUPLIKASI NAMA SEKOLAH ATAU NPSN
+      const existsNpsn = usersDB.find(u => u.npsn === npsn || u.user.toLowerCase() === npsn.toLowerCase());
+      const existsNama = usersDB.find(u => u.nama.toUpperCase() === nama.toUpperCase());
 
-      try {
-        const payload = {
-          action: 'saveUser',
-          user: npsn,
-          pass: pass,
-          nama: nama,
-          role: 'SEKOLAH',
-          npsn: npsn,
-          cabang: cabang
-        };
-
-        await fetch(API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        // Jeda waktu 1.5 detik agar server spreadsheet sempat menyimpan baris data
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        alert('Pendaftaran Berhasil!\n\nSekolah: ' + nama + '\nNPSN (Username): ' + npsn + '\n\nSilakan masuk menggunakan akun tersebut.');
-        
-        switchTab('login');
-        document.getElementById('loginUser').value = npsn;
-        document.getElementById('loginPass').value = pass;
-
-      } catch (error) {
-        console.error(error);
-        alert('Terjadi kesalahan saat mendaftarkan akun secara online.');
-      } finally {
-        btn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i><span>Daftarkan Akun Sekolah</span>';
-        btn.disabled = false;
-        lucide.createIcons();
+      if (existsNpsn || existsNama) {
+        alert('Pendaftaran Gagal!\n\nAkun untuk ' + nama + ' atau NPSN ' + npsn + ' sudah pernah terdaftar di sistem. Silakan langsung login atau hubungi Admin Pusat jika terjadi kesalahan data.');
+        return;
       }
+
+      const newAccount = {
+        user: npsn,
+        pass: pass,
+        nama: nama,
+        role: "SEKOLAH",
+        npsn: npsn,
+        cabang: cabang
+      };
+
+      usersDB.push(newAccount);
+      localStorage.setItem('sidsa_users_v10', JSON.stringify(usersDB));
+
+      alert('Pendaftaran Berhasil!\n\nSekolah: ' + nama + '\nNPSN (Username): ' + npsn + '\n\nSilakan masuk menggunakan akun tersebut.');
+      switchTab('login');
+      document.getElementById('loginUser').value = npsn;
+      document.getElementById('loginPass').value = pass;
     }
 
     window.onload = function() {
+      initUsersDB();
       populateSchoolDropdown();
     };
   </script>
