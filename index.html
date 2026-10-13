@@ -10,7 +10,6 @@
   <script>
     let currentSession = JSON.parse(localStorage.getItem('sidsa_session_v10'));
     
-    // Validasi sesi ketat: pastikan role dan identitas valid
     if (!currentSession || !currentSession.role || !currentSession.user) {
       alert("Sesi Anda telah berakhir atau belum login. Silakan masuk kembali.");
       window.location.href = 'login.html';
@@ -96,10 +95,11 @@
           <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
             <i data-lucide="users-round" class="w-5 h-5 text-brand-blue"></i> Manajemen Akun Sekolah Terdaftar
           </h3>
-          <p class="text-xs text-slate-500 mt-0.5">Kelola akun mandiri yang telah terdaftar di sistem.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Menghapus akun akan membersihkan seluruh akun & data isian sekolah agar bisa daftar ulang dari awal.</p>
         </div>
         <button onclick="closeManageUsersModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
       </div>
+
       <div class="flex-1 overflow-y-auto min-h-[250px]">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
@@ -114,6 +114,7 @@
           <tbody id="manageUsersTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
         </table>
       </div>
+
       <div class="text-right border-t pt-3">
         <button onclick="closeManageUsersModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs">Tutup</button>
       </div>
@@ -158,10 +159,11 @@
         <div>
           <label class="block font-bold text-slate-600 mb-1">Tahun Ajaran Baru</label>
           <input type="text" id="newTaInput" required placeholder="Contoh: 2026-2027" class="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue font-semibold">
+          <p class="text-[10px] text-slate-400 mt-1">Format: YYYY-YYYY (misal: 2026-2027)</p>
         </div>
         <div class="flex justify-end gap-2 border-t pt-3">
           <button type="button" onclick="closeAddTaModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-2 rounded-xl">Batal</button>
-          <button type="submit" class="bg-brand-blue hover:bg-brand-blueDark text-white font-bold px-4 py-2 rounded-xl shadow-sm">Tambah</button>
+          <button type="submit" class="bg-brand-blue hover:bg-brand-blueDark text-white font-bold px-4 py-2 rounded-xl shadow-sm">Tambah Tahun Ajaran</button>
         </div>
       </form>
     </div>
@@ -185,9 +187,46 @@
     // URL WEB APP GOOGLE APPS SCRIPT DATABASE
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyK1X4If9XPwXeSzNig4bvCTOS8iNsb5LuNmqwVYTqoSckVSr6ozMOqDBYfJklIZwvpLA/exec";
 
-    // Fungsi Sinkronisasi Realtime dengan Metode Upsert (Kirim nama modul spesifik agar terbuat tab terpisah)
+    // FUNGSI SINKRONISASI MODULAR KE GOOGLE SHEET
     function syncToGoogleSheet(schoolObj, tahunAjaranStr, moduleName) {
       if (!schoolObj) return;
+
+      const totSiswa = (schoolObj.siswa.k7L + schoolObj.siswa.k7P) + (schoolObj.siswa.k8L + schoolObj.siswa.k8P) + (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
+      
+      const u7 = schoolObj.keuangan?.siswaUmum7 ?? (schoolObj.siswa.k7L + schoolObj.siswa.k7P);
+      const u8 = schoolObj.keuangan?.siswaUmum8 ?? (schoolObj.siswa.k8L + schoolObj.siswa.k8P);
+      const u9 = schoolObj.keuangan?.siswaUmum9 ?? (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
+      const t7 = schoolObj.keuangan?.siswaTniau7 ?? 0;
+      const t8 = schoolObj.keuangan?.siswaTniau8 ?? 0;
+      const t9 = schoolObj.keuangan?.siswaTniau9 ?? 0;
+
+      const dopBln = (u7 * (schoolObj.keuangan?.dopUmum7 || 0)) + (u8 * (schoolObj.keuangan?.dopUmum8 || 0)) + (u9 * (schoolObj.keuangan?.dopUmum9 || 0))
+                   + (t7 * (schoolObj.keuangan?.dopTniau7 || 0)) + (t8 * (schoolObj.keuangan?.dopTniau8 || 0)) + (t9 * (schoolObj.keuangan?.dopTniau9 || 0));
+      const dopThn = (u7 * (schoolObj.keuangan?.dopUmumThn7 || 0)) + (u8 * (schoolObj.keuangan?.dopUmumThn8 || 0)) + (u9 * (schoolObj.keuangan?.dopUmumThn9 || 0))
+                   + (t7 * (schoolObj.keuangan?.dopTniauThn7 || 0)) + (t8 * (schoolObj.keuangan?.dopTniauThn8 || 0)) + (t9 * (schoolObj.keuangan?.dopTniauThn9 || 0));
+
+      let dopLainBln = 0, dopLainThn = 0;
+      if (schoolObj.keuangan?.dopLainnyaList && Array.isArray(schoolObj.keuangan.dopLainnyaList)) {
+        schoolObj.keuangan.dopLainnyaList.forEach(item => {
+          const nom = parseFloat(item.nominal) || 0;
+          const jS = parseInt(item.jumlahSiswa) || totSiswa;
+          if ((item.tipe || 'Bulanan') === 'Bulanan') dopLainBln += (nom * jS);
+          else dopLainThn += (nom * jS);
+        });
+      }
+
+      const totalDopBln = dopBln + dopLainBln;
+      const totalDopThn = dopThn + dopLainThn;
+      const dspG1 = (schoolObj.keuangan?.dspGel1 || 0) * (schoolObj.keuangan?.dspSiswa1 || 0);
+      const dspG2 = (schoolObj.keuangan?.dspGel2 || 0) * (schoolObj.keuangan?.dspSiswa2 || 0);
+      const dspG3 = (schoolObj.keuangan?.dspGel3 || 0) * (schoolObj.keuangan?.dspSiswa3 || 0);
+      let dspLain = 0;
+      if (schoolObj.keuangan?.dspLainnyaList && Array.isArray(schoolObj.keuangan.dspLainnyaList)) {
+        schoolObj.keuangan.dspLainnyaList.forEach(item => { dspLain += (parseFloat(item.nominal) || 0) * (parseInt(item.jumlahSiswa) || 0); });
+      }
+      const totalDSP = dspG1 + dspG2 + dspG3 + dspLain;
+      const totalRPSS = (schoolObj.keuangan?.rpssSumber01 || 0) + (schoolObj.keuangan?.rpssSumber02 || 0) + (schoolObj.keuangan?.rpssSumber03 || 0);
+      const grandTotalKas = (totalDopBln * 12) + totalDopThn + totalDSP + totalRPSS;
 
       const payload = {
         tahunAjaran: tahunAjaranStr,
@@ -204,6 +243,7 @@
         legalitas: schoolObj.legalitas,
         keuangan: schoolObj.keuangan,
         dokumenLaporan: schoolObj.dokumenLaporan,
+        grandTotalKas: grandTotalKas,
         updatedModule: moduleName || "Data Umum"
       };
 
@@ -260,18 +300,38 @@
         hasDataRevision: false,
         lastUpdatedModule: "",
         legalitas: { 
-          skPendirian: "-", tglSK: "-", fileSKPendirian: "", statusSKPendirian: "Belum Diisi", notesSKPendirian: "",
-          skIzin: "-", tglSKIzin: "", fileSKIzin: "", statusSKIzin: "Belum Diisi", notesSKIzin: "",
-          fileAkreditasi: "", statusAkreditasi: "Belum Diisi", notesAkreditasi: ""
+          skPendirian: "-", 
+          tglSK: "-", 
+          fileSKPendirian: "", 
+          statusSKPendirian: "Belum Diisi",
+          notesSKPendirian: "",
+          skIzin: "-", 
+          tglSKIzin: "", 
+          fileSKIzin: "",
+          statusSKIzin: "Belum Diisi",
+          notesSKIzin: "",
+          fileAkreditasi: "",
+          statusAkreditasi: "Belum Diisi",
+          notesAkreditasi: ""
         },
         siswa: { k7L: 0, k7P: 0, r7: 0, k8L: 0, k8P: 0, r8: 0, k9L: 0, k9P: 0, r9: 0 },
         pendidik: { L: 0, P: 0, gty: 0, cgty: 0, dpkPns: 0 },
         tendik: { L: 0, P: 0, kty: 0, ckty: 0, dpkPns: 0 },
         keuangan: {
-          dopUmum7: 0, dopUmum8: 0, dopUmum9: 0, dopUmumThn7: 0, dopUmumThn8: 0, dopUmumThn9: 0, siswaUmum7: 0, siswaUmum8: 0, siswaUmum9: 0,
-          dopTniau7: 0, dopTniau8: 0, dopTniau9: 0, dopTniauThn7: 0, dopTniauThn8: 0, dopTniauThn9: 0, siswaTniau7: 0, siswaTniau8: 0, siswaTniau9: 0,
-          dopLainnyaList: [], rpssSumber01: 0, rpssSumber02: 0, rpssSumber03: 0,
-          dspGel1: 0, dspSiswa1: 0, dspGel2: 0, dspSiswa2: 0, dspGel3: 0, dspSiswa3: 0, dspLainnyaList: []
+          dopUmum7: 0, dopUmum8: 0, dopUmum9: 0,
+          dopUmumThn7: 0, dopUmumThn8: 0, dopUmumThn9: 0,
+          siswaUmum7: 0, siswaUmum8: 0, siswaUmum9: 0,
+          dopTniau7: 0, dopTniau8: 0, dopTniau9: 0,
+          dopTniauThn7: 0, dopTniauThn8: 0, dopTniauThn9: 0,
+          siswaTniau7: 0, siswaTniau8: 0, siswaTniau9: 0,
+          dopLainnyaList: [],
+          rpssSumber01: 0,
+          rpssSumber02: 0,
+          rpssSumber03: 0,
+          dspGel1: 0, dspSiswa1: 0,
+          dspGel2: 0, dspSiswa2: 0,
+          dspGel3: 0, dspSiswa3: 0,
+          dspLainnyaList: []
         },
         dokumenLaporan: {
           rkas: { status: "Belum Mengisi", notes: "", fileName: "" },
@@ -289,23 +349,34 @@
 
     let activeTab = 'dashboard';
     let db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
-    if (!db || typeof db !== 'object') db = {};
+
+    if (db["2026/2027"]) {
+      if (!db["2026-2027"] || db["2026-2027"].length === 0) {
+        db["2026-2027"] = db["2026/2027"];
+      }
+      delete db["2026/2027"];
+    }
+
+    if (!db || typeof db !== 'object') {
+      db = {};
+    }
 
     if (currentSession.role === 'SEKOLAH') {
       const taList = Object.keys(db);
-      if (taList.length === 0) {
-        db["2026-2027"] = [createDefaultSchoolObject(currentSession.npsn || currentSession.user, currentSession.nama, currentSession.cabang)];
+      if (taList.length > 0) {
+        const latestTA = taList.sort().reverse()[0];
+        const exists = db[latestTA].find(s => s.npsn === currentSession.npsn);
+        if (!exists) {
+          db[latestTA].push(
+            createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang)
+          );
+        }
       } else {
-        taList.forEach(ta => {
-          if (!Array.isArray(db[ta])) db[ta] = [];
-          let exists = db[ta].find(s => s.npsn === currentSession.npsn || s.npsn === currentSession.user);
-          if (!exists) {
-            db[ta].push(createDefaultSchoolObject(currentSession.npsn || currentSession.user, currentSession.nama, currentSession.cabang));
-          }
-        });
+        db["2026-2027"] = [createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang)];
       }
-      saveDB();
     }
+
+    localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
 
     function saveDB() {
       localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
@@ -323,16 +394,97 @@
       if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
       if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
 
+      // Sinkronisasi otomatis ke Google Sheet dengan parameter modul spesifik
       const taList = Object.keys(db).sort().reverse();
       const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
-      
-      // Mengirimkan nama modul spesifik agar Google Apps Script membuat tab terpisah
       syncToGoogleSheet(school, currentTA, moduleName);
+    }
+
+    function resetDataDemo() {
+      const selectedTA = document.getElementById('filterTA')?.value;
+      if (!selectedTA) {
+        alert("Pilih Tahun Ajaran terlebih dahulu di filter atas!");
+        return;
+      }
+      if (confirm(`Apakah Anda yakin ingin mereset database khusus untuk Tahun Ajaran ${selectedTA}?`)) {
+        delete db[selectedTA];
+        saveDB();
+        alert(`Database untuk Tahun Ajaran ${selectedTA} berhasil di-reset!`);
+        window.location.reload();
+      }
+    }
+
+    function openManageUsersModal() {
+      renderManageUsersTable();
+      document.getElementById('manageUsersModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeManageUsersModal() {
+      document.getElementById('manageUsersModal').classList.add('hidden');
+    }
+
+    function renderManageUsersTable() {
+      const tbody = document.getElementById('manageUsersTableBody');
+      let usersDB = JSON.parse(localStorage.getItem('sidsa_users_v10')) || [];
+      const sekolahUsers = usersDB.filter(u => u.role === 'SEKOLAH');
+
+      if (sekolahUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Belum ada akun sekolah yang terdaftar.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      sekolahUsers.forEach((user, index) => {
+        html += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 text-slate-400 font-mono">${index + 1}</td>
+            <td class="p-2.5 font-bold text-slate-800">${user.nama}</td>
+            <td class="p-2.5 font-bold text-brand-blue">${user.npsn || user.user}</td>
+            <td class="p-2.5 text-slate-600">${user.cabang || '-'}</td>
+            <td class="p-2.5 text-center">
+              <button onclick="deleteSchoolAccount('${user.npsn || user.user}', '${user.nama}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 mx-auto" title="Hapus Akun & Data Sekolah">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function deleteSchoolAccount(npsn, namaSekolah) {
+      if (confirm(`Apakah Anda yakin ingin menghapus akun & seluruh data untuk:\n\n${namaSekolah} (NPSN: ${npsn})?`)) {
+        let usersDB = JSON.parse(localStorage.getItem('sidsa_users_v10')) || [];
+        usersDB = usersDB.filter(u => u.npsn !== npsn && u.user !== npsn);
+        localStorage.setItem('sidsa_users_v10', JSON.stringify(usersDB));
+
+        let mainDB = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
+        Object.keys(mainDB).forEach(ta => {
+          if (Array.isArray(mainDB[ta])) {
+            mainDB[ta] = mainDB[ta].filter(s => s.npsn !== npsn);
+          }
+        });
+        db = mainDB;
+        saveDB();
+
+        alert(`Akun dan seluruh data untuk ${namaSekolah} berhasil dihapus total!`);
+        renderManageUsersTable();
+        renderPage(activeTab);
+      }
+    }
+
+    function handleLogout() {
+      if (confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) {
+        localStorage.removeItem('sidsa_session_v10');
+        window.location.href = 'login.html';
+      }
     }
 
     function parseRoleInfo() {
       if (currentSession.role === 'SEKOLAH') {
-        return { role: 'SEKOLAH', npsn: currentSession.npsn || currentSession.user };
+        return { role: 'SEKOLAH', npsn: currentSession.npsn };
       }
       return { role: currentSession.role, npsn: null };
     }
@@ -346,11 +498,16 @@
 
       const selectedTA = document.getElementById('filterTA')?.value || taList[0];
       const school = db[selectedTA]?.find(s => s.npsn === npsn);
+
       if (!school) return { hasIdentitasRev: false, hasDokumenRev: false };
 
       const leg = school.legalitas || {};
       const hasIdentitasRev = (leg.statusAkreditasi === 'Perlu Perbaikan' || leg.statusSKPendirian === 'Perlu Perbaikan' || leg.statusSKIzin === 'Perlu Perbaikan');
-      let hasDokumenRev = school.dokumenLaporan ? Object.values(school.dokumenLaporan).some(d => d.status === 'Perlu Perbaikan') : false;
+
+      let hasDokumenRev = false;
+      if (school.dokumenLaporan) {
+        hasDokumenRev = Object.values(school.dokumenLaporan).some(d => d.status === 'Perlu Perbaikan');
+      }
 
       return { hasIdentitasRev, hasDokumenRev };
     }
@@ -362,9 +519,10 @@
       let html = '';
       if (isAdmin) {
         html += '<button onclick="openManageUsersModal()" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl border border-emerald-400/30 transition flex items-center gap-1 shadow-sm"><i data-lucide="users-round" class="w-3.5 h-3.5"></i> Manajemen Akun</button>';
+        html += '<button onclick="resetDataDemo()" class="text-xs font-semibold bg-blue-700/60 hover:bg-blue-700 text-blue-100 px-3 py-1.5 rounded-xl border border-blue-400/30 transition flex items-center gap-1"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Database</button>';
       }
 
-      const roleLabel = currentSession.role === 'SEKOLAH' ? 'Sekolah (NPSN: ' + (currentSession.npsn || currentSession.user) + ')' : currentSession.role;
+      const roleLabel = currentSession.role === 'SEKOLAH' ? 'Sekolah (NPSN: ' + currentSession.npsn + ')' : currentSession.role;
 
       html += '<div class="bg-blue-950/40 px-3.5 py-1.5 rounded-xl border border-white/10 text-xs flex items-center gap-2.5 backdrop-blur-sm"><i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i><div><span class="font-bold block">' + currentSession.nama + '</span><span class="text-[10px] text-blue-200 block">' + roleLabel + '</span></div></div>';
       html += '<button onclick="handleLogout()" class="text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm"><i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar</button>';
@@ -455,7 +613,7 @@
       if (latestTA && db[latestTA].length > 0) {
         db[newTA] = db[latestTA].map(s => createDefaultSchoolObject(s.npsn, s.nama, s.cabang));
       } else {
-        db[newTA] = [createDefaultSchoolObject(currentSession.npsn || currentSession.user, currentSession.nama, currentSession.cabang)];
+        db[newTA] = [createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang)];
       }
 
       saveDB();
@@ -482,7 +640,7 @@
       if (role === 'SEKOLAH') {
         let schoolData = list.find(s => s.npsn === npsn);
         if (!schoolData) {
-          schoolData = createDefaultSchoolObject(npsn, currentSession.nama, currentSession.cabang);
+          schoolData = createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang);
           list.push(schoolData);
           saveDB();
         }
@@ -579,7 +737,7 @@
 
       const selectedTA = document.getElementById('filterTA')?.value || "";
       if (!selectedTA) {
-        container.innerHTML = '<div class="bg-white rounded-2xl border border-slate-200/85 shadow-sm p-12 text-center space-y-3"><i data-lucide="calendar-off" class="w-16 h-16 text-slate-300 mx-auto"></i><h3 class="font-bold text-slate-700 text-base">Belum Ada Tahun Ajaran</h3></div>';
+        container.innerHTML = '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-12 text-center space-y-3"><i data-lucide="calendar-off" class="w-16 h-16 text-slate-300 mx-auto"></i><h3 class="font-bold text-slate-700 text-base">Belum Ada Tahun Ajaran</h3></div>';
         lucide.createIcons(); return;
       }
 
@@ -598,13 +756,22 @@
           tableRows += '<tr class="hover:bg-slate-50/80 transition"><td class="p-3.5 font-semibold text-brand-blue">' + s.nama + '<br><span class="text-slate-400 font-normal">NPSN: ' + s.npsn + '</span></td><td class="p-3.5 font-medium text-slate-600">' + s.cabang + '</td><td class="p-3.5 text-center font-bold text-slate-700">' + formatAngka(totalS) + '</td><td class="p-3.5 text-center font-medium text-slate-600">' + formatAngka(totalR) + '</td><td class="p-3.5 text-center font-medium text-slate-600">' + formatAngka(s.pendidik.L + s.pendidik.P) + '</td><td class="p-3.5 text-center">' + statusBadge + '</td></tr>';
         });
 
-        container.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-blue-50 text-brand-blue rounded-xl"><i data-lucide="school" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Sekolah</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSekolah) + ' / ' + formatAngka(TOTAL_SMP_ANGKASA) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Siswa</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSiswa) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="user-check" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Rasio Guru:Siswa</p><h3 class="text-xl font-black text-slate-800">1 : ' + stats.rasioGuruSiswa + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total DOP Bulanan</p><h3 class="text-lg font-black text-slate-800">' + formatRupiah(stats.totalDOPBulan) + '</h3></div></div></div><div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"><div class="p-4.5 bg-slate-50/50 border-b flex justify-between items-center"><h4 class="font-bold text-slate-800 text-sm">Ringkasan Data Sekolah</h4><span class="text-xs font-semibold text-slate-500 bg-white px-3 py-1 rounded-xl border">TA ' + selectedTA + '</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b"><tr><th class="p-3.5">NPSN & Nama Sekolah</th><th class="p-3.5">Lanud</th><th class="p-3.5 text-center">Total Siswa</th><th class="p-3.5 text-center">Rombel</th><th class="p-3.5 text-center">Pendidik</th><th class="p-3.5 text-center">Status</th></tr></thead><tbody class="divide-y">' + tableRows + '</tbody></table></div></div>';
+        container.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-blue-50 text-brand-blue rounded-xl"><i data-lucide="school" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Sekolah</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSekolah) + ' / ' + formatAngka(TOTAL_SMP_ANGKASA) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Siswa</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSiswa) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="user-check" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Rasio Guru:Siswa</p><h3 class="text-xl font-black text-slate-800">1 : ' + stats.rasioGuruSiswa + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total DOP Bulanan</p><h3 class="text-lg font-black text-slate-800">' + formatRupiah(stats.totalDOPBulan) + '</h3></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4">Distribusi Siswa</h4><canvas id="chartSiswa" class="max-h-64"></canvas></div><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4">Komposisi SDM</h4><canvas id="chartSDM" class="max-h-64"></canvas></div></div><div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"><div class="p-4.5 bg-slate-50/50 border-b flex justify-between items-center"><h4 class="font-bold text-slate-800 text-sm">Ringkasan Data Sekolah</h4><span class="text-xs font-semibold text-slate-500 bg-white px-3 py-1 rounded-xl border">TA ' + selectedTA + '</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b"><tr><th class="p-3.5">NPSN & Nama Sekolah</th><th class="p-3.5">Lanud</th><th class="p-3.5 text-center">Total Siswa</th><th class="p-3.5 text-center">Rombel</th><th class="p-3.5 text-center">Pendidik</th><th class="p-3.5 text-center">Status</th></tr></thead><tbody class="divide-y">' + tableRows + '</tbody></table></div></div>';
+
+        setTimeout(() => {
+          const ctx1 = document.getElementById('chartSiswa');
+          if (ctx1 && list.length > 0) new Chart(ctx1, { type: 'bar', data: { labels: list.map(s => s.nama), datasets: [{ label: 'Siswa', data: list.map(s => (s.siswa.k7L + s.siswa.k7P) + (s.siswa.k8L + s.siswa.k8P) + (s.siswa.k9L + s.siswa.k9P)), backgroundColor: '#0052cc', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
+          const ctx2 = document.getElementById('chartSDM');
+          if (ctx2) new Chart(ctx2, { type: 'doughnut', data: { labels: ['Pendidik (Guru)', 'Tendik'], datasets: [{ data: [stats.totalPendidik, stats.totalTendik], backgroundColor: ['#ffab00', '#0052cc'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+        }, 50);
 
       } else if (page === 'identitas') container.innerHTML = renderIdentitasModule(list);
         else if (page === 'peserta_didik') container.innerHTML = renderPesertaDidikModule(list);
         else if (page === 'pendidik_tendik') container.innerHTML = renderPendidikTendikModule(list);
-        else if (page === 'keuangan') container.innerHTML = renderKeuanganModule(list);
-        else if (page === 'dokumen_tambahan') container.innerHTML = renderDokumenTambahanModule(list);
+        else if (page === 'keuangan') {
+          container.innerHTML = renderKeuanganModule(list);
+          list.forEach(s => { renderDopLainRows(s.npsn, s.keuangan?.dopLainnyaList || []); renderDspLainRows(s.npsn, s.keuangan?.dspLainnyaList || []); });
+        } else if (page === 'dokumen_tambahan') container.innerHTML = renderDokumenTambahanModule(list);
         else if (page === 'analisis') container.innerHTML = renderAnalisisModule(list, stats);
         else if (page === 'validasi') container.innerHTML = renderValidasiModule(list);
         else if (page === 'laporan') container.innerHTML = renderLaporanModule(list);
@@ -614,7 +781,7 @@
     }
 
     function renderPengaturanPasswordModule() {
-      return '<div class="max-w-lg mx-auto bg-white rounded-2xl border shadow-sm p-6 space-y-4"><h3 class="font-bold text-slate-800 text-base">Ubah Kata Sandi</h3><form onsubmit="handleUpdatePassword(event)" class="space-y-4 text-xs"><div><label class="block font-bold mb-1">Sandi Lama</label><input type="password" id="oldPassword" required class="w-full p-2.5 border rounded-xl"></div><div><label class="block font-bold mb-1">Sandi Baru</label><input type="password" id="newPassword" required class="w-full p-2.5 border rounded-xl"></div><div><label class="block font-bold mb-1">Konfirmasi Sandi Baru</label><input type="password" id="confirmNewPassword" required class="w-full p-2.5 border rounded-xl"></div><button type="submit" class="w-full bg-brand-blue text-white font-bold py-2.5 rounded-xl">Simpan Sandi Baru</button></form></div>';
+      return '<div class="max-w-lg mx-auto bg-white rounded-2xl border shadow-sm p-6 space-y-4"><h3 class="font-bold text-slate-800 text-base">Ubah Sandi</h3><form onsubmit="handleUpdatePassword(event)" class="space-y-4 text-xs"><div><label class="block font-bold mb-1">Sandi Lama</label><input type="password" id="oldPassword" required class="w-full p-2.5 border rounded-xl"></div><div><label class="block font-bold mb-1">Sandi Baru</label><input type="password" id="newPassword" required class="w-full p-2.5 border rounded-xl"></div><div><label class="block font-bold mb-1">Konfirmasi Sandi Baru</label><input type="password" id="confirmNewPassword" required class="w-full p-2.5 border rounded-xl"></div><button type="submit" class="w-full bg-brand-blue text-white font-bold py-2.5 rounded-xl">Simpan Sandi Baru</button></form></div>';
     }
 
     function handleUpdatePassword(e) {
@@ -818,15 +985,9 @@
       }
     }
 
-    function renderAnalisisModule(list, stats) {
-      return '<div class="bg-white p-6 rounded-2xl border shadow-sm"><h3 class="font-bold text-slate-800 text-base">Analysis & Executive Decision Support</h3></div>';
-    }
-    function renderValidasiModule(list) {
-      return '<div class="bg-white rounded-2xl border shadow-sm p-6"><h3 class="font-bold text-slate-800 text-base">Validasi Pusat</h3></div>';
-    }
-    function renderLaporanModule(list) {
-      return '<div class="bg-white rounded-2xl border shadow-sm p-6"><h3 class="font-bold text-slate-800 text-base">Rekap Laporan</h3></div>';
-    }
+    function renderAnalisisModule(list, stats) { return '<div class="bg-white p-6 rounded-2xl border shadow-sm"><h3 class="font-bold text-slate-800 text-base">Analysis & Executive Decision Support</h3></div>'; }
+    function renderValidasiModule(list) { return '<div class="bg-white rounded-2xl border shadow-sm p-6"><h3 class="font-bold text-slate-800 text-base">Validasi Pusat</h3></div>'; }
+    function renderLaporanModule(list) { return '<div class="bg-white rounded-2xl border shadow-sm p-6"><h3 class="font-bold text-slate-800 text-base">Rekap Laporan</h3></div>'; }
 
     function exportToExcel() {
       const list = getFilteredData();
