@@ -10,7 +10,6 @@
   <script>
     let currentSession = JSON.parse(localStorage.getItem('sidsa_session_v10'));
     
-    // Validasi sesi: jika belum login, kembalikan ke halaman login.html
     if (!currentSession || !currentSession.role || !currentSession.user) {
       alert("Sesi Anda telah berakhir atau belum login. Silakan masuk kembali.");
       window.location.href = 'login.html';
@@ -225,38 +224,19 @@
         hasDataRevision: false,
         lastUpdatedModule: "",
         legalitas: { 
-          skPendirian: "-", 
-          tglSK: "-", 
-          fileSKPendirian: "", 
-          statusSKPendirian: "Belum Diisi",
-          notesSKPendirian: "",
-          skIzin: "-", 
-          tglSKIzin: "-", 
-          fileSKIzin: "",
-          statusSKIzin: "Belum Diisi",
-          notesSKIzin: "",
-          fileAkreditasi: "",
-          statusAkreditasi: "Belum Diisi",
-          notesAkreditasi: ""
+          skPendirian: "-", tglSK: "-", fileSKPendirian: "", statusSKPendirian: "Belum Diisi", notesSKPendirian: "",
+          skIzin: "-", tglSKIzin: "", fileSKIzin: "", statusSKIzin: "Belum Diisi", notesSKIzin: "",
+          fileAkreditasi: "", statusAkreditasi: "Belum Diisi", notesAkreditasi: ""
         },
         siswa: { k7L: 0, k7P: 0, r7: 0, k8L: 0, k8P: 0, r8: 0, k9L: 0, k9P: 0, r9: 0 },
         pendidik: { L: 0, P: 0, gty: 0, cgty: 0, dpkPns: 0 },
         tendik: { L: 0, P: 0, kty: 0, ckty: 0, dpkPns: 0 },
         keuangan: {
-          dopUmum7: 0, dopUmum8: 0, dopUmum9: 0,
-          dopUmumThn7: 0, dopUmumThn8: 0, dopUmumThn9: 0,
-          siswaUmum7: 0, siswaUmum8: 0, siswaUmum9: 0,
-          dopTniau7: 0, dopTniau8: 0, dopTniau9: 0,
-          dopTniauThn7: 0, dopTniauThn8: 0, dopTniauThn9: 0,
-          siswaTniau7: 0, siswaTniau8: 0, siswaTniau9: 0,
-          dopLainnyaList: [],
-          rpssSumber01: 0,
-          rpssSumber02: 0,
-          rpssSumber03: 0,
-          dspGel1: 0, dspSiswa1: 0,
-          dspGel2: 0, dspSiswa2: 0,
-          dspGel3: 0, dspSiswa3: 0,
-          dspLainnyaList: []
+          dopUmum7: 0, dopUmum8: 0, dopUmum9: 0, dopUmumThn7: 0, dopUmumThn8: 0, dopUmumThn9: 0,
+          siswaUmum7: 0, siswaUmum8: 0, siswaUmum9: 0, dopTniau7: 0, dopTniau8: 0, dopTniau9: 0,
+          dopTniauThn7: 0, dopTniauThn8: 0, dopTniauThn9: 0, siswaTniau7: 0, siswaTniau8: 0, siswaTniau9: 0,
+          dopLainnyaList: [], rpssSumber01: 0, rpssSumber02: 0, rpssSumber03: 0,
+          dspGel1: 0, dspSiswa1: 0, dspGel2: 0, dspSiswa2: 0, dspGel3: 0, dspSiswa3: 0, dspLainnyaList: []
         },
         dokumenLaporan: {
           rkas: { status: "Belum Mengisi", notes: "", fileName: "" },
@@ -298,6 +278,8 @@
         }
       }
     }
+
+    localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
 
     // FUNGSI SIMPAN DB KE LOCALSTORAGE & GOOGLE SPREADSHEET ONLINE
     function saveDB() {
@@ -388,6 +370,10 @@
 
     function deleteSchoolAccount(npsn, namaSekolah) {
       if (confirm(`Apakah Anda yakin ingin menghapus akun & seluruh data untuk:\n\n${namaSekolah} (NPSN: ${npsn})?`)) {
+        let usersDB = JSON.parse(localStorage.getItem('sidsa_users_v10')) || [];
+        usersDB = usersDB.filter(u => u.npsn !== npsn && u.user !== npsn);
+        localStorage.setItem('sidsa_users_v10', JSON.stringify(usersDB));
+
         let mainDB = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
         Object.keys(mainDB).forEach(ta => {
           if (Array.isArray(mainDB[ta])) {
@@ -424,7 +410,6 @@
       const taList = Object.keys(db).sort().reverse();
       if (taList.length === 0) return { hasIdentitasRev: false, hasDokumenRev: false };
 
-      const selectedTA = document.getElementById('filterTA')?.value || taList[0];
       const school = db[taList[0]]?.find(s => s.npsn === npsn);
       if (!school) return { hasIdentitasRev: false, hasDokumenRev: false };
 
@@ -512,11 +497,6 @@
       const isAdmin = role === 'ADMIN';
 
       const taList = Object.keys(db).sort().reverse();
-      if (taList.length === 0) {
-        taList.push("2026-2027");
-        db["2026-2027"] = [];
-      }
-
       const selectedTA = document.getElementById('filterTA')?.value || taList[0] || "";
 
       let taOptionsHtml = '<option value="" disabled ' + (!selectedTA ? 'selected' : '') + '>-- Pilih Tahun Ajaran --</option>';
@@ -553,6 +533,7 @@
     function handleAddNewTA(e) {
       e.preventDefault();
       const newTA = document.getElementById('newTaInput').value.trim();
+
       if (!newTA) return;
 
       if (db[newTA]) {
@@ -654,13 +635,17 @@
         const dopThn = (u7 * (s.keuangan?.dopUmumThn7 || 0)) + (u8 * (s.keuangan?.dopUmumThn8 || 0)) + (u9 * (s.keuangan?.dopUmumThn9 || 0))
                      + (t7 * (s.keuangan?.dopTniauThn7 || 0)) + (t8 * (s.keuangan?.dopTniauThn8 || 0)) + (t9 * (s.keuangan?.dopTniauThn9 || 0));
 
-        let dopLainSubtotalBln = 0, dopLainSubtotalThn = 0;
+        let dopLainSubtotalBln = 0;
+        let dopLainSubtotalThn = 0;
         if (s.keuangan?.dopLainnyaList && Array.isArray(s.keuangan.dopLainnyaList)) {
           s.keuangan.dopLainnyaList.forEach(item => {
             const nom = parseFloat(item.nominal) || 0;
             const jSiswa = parseInt(item.jumlahSiswa) || sSiswa;
-            if ((item.tipe || 'Bulanan') === 'Bulanan') dopLainSubtotalBln += (nom * jSiswa);
-            else dopLainSubtotalThn += (nom * jSiswa);
+            if ((item.tipe || 'Bulanan') === 'Bulanan') {
+              dopLainSubtotalBln += (nom * jSiswa);
+            } else {
+              dopLainSubtotalThn += (nom * jSiswa);
+            }
           });
         }
 
@@ -678,6 +663,7 @@
         totalRombel += sRombel;
         totalPendidik += sPendidik;
         totalTendik += sTendik;
+
         totalDOPBulan += (dopBln + dopLainSubtotalBln);
         totalDOPTahunRutin += (dopThn + dopLainSubtotalThn);
         totalDSPPenerimaan += (dspG1 + dspG2 + dspG3 + dspLainSubtotal);
@@ -730,9 +716,12 @@
       title.innerHTML = '<i data-lucide="file-text" class="w-5 h-5 text-brand-blue"></i> Preview ' + docLabel;
       subtitle.innerText = schoolName + ' • Nama File: ' + fileName;
 
-      dlBtn.onclick = function() { downloadDummyDoc(fileName); };
+      dlBtn.onclick = function() {
+        downloadDummyDoc(fileName);
+      };
 
-      body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-text" class="w-16 h-16 text-blue-600 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Berkas (' + fileName + ')</h4><p class="text-xs text-slate-500">Dokumen telah terverifikasi oleh sistem pusat.</p></div>';
+      body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-text" class="w-16 h-16 text-blue-600 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Berkas Dokumen (' + fileName + ')</h4><p class="text-xs text-slate-500 max-w-md mx-auto">Berkas dokumen telah terverifikasi oleh sistem pusat.</p></div>';
+
       modal.classList.remove('hidden');
       lucide.createIcons();
     }
@@ -795,7 +784,7 @@
           });
         }
 
-        container.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-blue-50 text-brand-blue rounded-xl"><i data-lucide="school" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Sekolah Mengisi</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSekolah) + ' / ' + formatAngka(TOTAL_SMP_ANGKASA) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Peserta Didik</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSiswa) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="user-check" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Rasio Guru : Siswa</p><h3 class="text-xl font-black text-slate-800">1 : ' + stats.rasioGuruSiswa + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total DOP Bulanan</p><h3 class="text-lg font-black text-slate-800">' + formatRupiah(stats.totalDOPBulan) + '</h3></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4">Distribusi Siswa per Sekolah</h4><canvas id="chartSiswa" class="max-h-64"></canvas></div><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4">Komposisi SDM (Guru vs Tendik)</h4><canvas id="chartSDM" class="max-h-64"></canvas></div></div><div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"><div class="p-4.5 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center"><h4 class="font-bold text-slate-800 text-sm">Ringkasan Data Sekolah</h4><span class="text-xs font-semibold text-slate-500 bg-white px-3 py-1 rounded-xl border border-slate-200">Tahun Ajaran ' + selectedTA + '</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200"><tr><th class="p-3.5">NPSN & Nama Sekolah</th><th class="p-3.5">Nama Lanud</th><th class="p-3.5 text-center">Total Siswa</th><th class="p-3.5 text-center">Rombel</th><th class="p-3.5 text-center">Pendidik</th><th class="p-3.5 text-center">Status Data & Perubahan</th></tr></thead><tbody class="divide-y divide-slate-100">' + tableRows + '</tbody></table></div></div>';
+        container.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-blue-50 text-brand-blue rounded-xl"><i data-lucide="school" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Sekolah Mengisi</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSekolah) + ' / ' + formatAngka(TOTAL_SMP_ANGKASA) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Peserta Didik</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSiswa) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="user-check" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Rasio Guru : Siswa</p><h3 class="text-xl font-black text-slate-800">1 : ' + stats.rasioGuruSiswa + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total DOP Bulanan</p><h3 class="text-lg font-black text-slate-800">' + formatRupiah(stats.totalDOPBulan) + '</h3></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-blue"></i> Distribusi Siswa per Sekolah</h4><canvas id="chartSiswa" class="max-h-64"></canvas></div><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4 text-brand-orange"></i> Komposisi SDM (Guru vs Tendik)</h4><canvas id="chartSDM" class="max-h-64"></canvas></div></div><div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"><div class="p-4.5 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center"><h4 class="font-bold text-slate-800 text-sm">Ringkasan Data Sekolah</h4><span class="text-xs font-semibold text-slate-500 bg-white px-3 py-1 rounded-xl border border-slate-200">Tahun Ajaran ' + selectedTA + '</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200"><tr><th class="p-3.5">NPSN & Nama Sekolah</th><th class="p-3.5">Nama Lanud</th><th class="p-3.5 text-center">Total Siswa</th><th class="p-3.5 text-center">Rombel</th><th class="p-3.5 text-center">Pendidik</th><th class="p-3.5 text-center">Status Data & Perubahan</th></tr></thead><tbody class="divide-y divide-slate-100">' + tableRows + '</tbody></table></div></div>';
 
         setTimeout(() => {
           const ctx1 = document.getElementById('chartSiswa');
@@ -839,10 +828,6 @@
         container.innerHTML = renderPendidikTendikModule(list);
       } else if (page === 'keuangan') {
         container.innerHTML = renderKeuanganModule(list);
-        list.forEach(s => {
-          renderDopLainRows(s.npsn, s.keuangan?.dopLainnyaList || []);
-          renderDspLainRows(s.npsn, s.keuangan?.dspLainnyaList || []);
-        });
       } else if (page === 'dokumen_tambahan') {
         container.innerHTML = renderDokumenTambahanModule(list);
       } else if (page === 'analisis') {
