@@ -244,7 +244,6 @@
         grandTotalKas: grandTotalKas
       };
 
-      // Pastikan fetch syncToGoogleSheet ada di sini
       fetch(GOOGLE_SHEET_WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -257,9 +256,9 @@
       .catch(err => {
         console.error("Gagal sinkronisasi Google Sheet:", err);
       });
-    } // <--- TUTUP KURUNG KURAWAL syncToGoogleSheet DISINI!
+    }
 
-    // FUNGSI INI BERDIRI SENDIRI DI LUAR (SEJAJAR)
+    // FUNGSI SINKRONISASI AKUN (BERDIRI SENDIRI DI LUAR)
     function syncAccountToSheet(accountObj) {
       const payload = {
         updatedModule: "akun",
@@ -270,7 +269,7 @@
         pass: accountObj.pass,
         cabang: accountObj.cabang
       };
-      
+
       fetch(GOOGLE_SHEET_WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
