@@ -1101,76 +1101,88 @@
       return '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">' + alertBannerHtml + '<div class="flex justify-between items-center"><h3 class="font-bold text-slate-800 text-base">Identitas & Legalitas Sekolah</h3></div><div class="space-y-6">' + itemsHtml + '</div></div>';
     }
 
-    function uploadLegalitasFile(npsn, fieldKey, inputElem) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      const file = inputElem.files[0];
+function uploadLegalitasFile(npsn, fieldKey, inputElem) {
+  const taList = Object.keys(db).sort().reverse();
+  const ta = document.getElementById('filterTA')?.value || taList[0];
+  const school = db[ta].find(s => s.npsn === npsn);
+  const file = inputElem.files[0];
 
-      if (!file) return;
+  if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const base64String = e.target.result;
-        const fileName = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64String = e.target.result;
+    const fileName = file.name;
 
-        // Tentukan kategori folder berdasarkan jenis file legalitas
-        let katFolder = "Berkas_Legalitas_Lainnya";
-        if (fieldKey === 'fileAkreditasi') katFolder = "Berkas_Akreditasi";
-        else if (fieldKey === 'fileSKPendirian') katFolder = "Berkas_SK_Pendirian";
-        else if (fieldKey === 'fileSKIzin') katFolder = "Berkas_SK_Izin_Operasional";
+    // Tentukan kategori folder berdasarkan jenis file legalitas
+    let katFolder = "Berkas_Legalitas_Lainnya";
+    if (fieldKey === 'fileAkreditasi') katFolder = "Berkas_Akreditasi";
+    else if (fieldKey === 'fileSKPendirian') katFolder = "Berkas_SK_Pendirian";
+    else if (fieldKey === 'fileSKIzin') katFolder = "Berkas_SK_Izin_Operasional";
 
-        if (school) {
-          const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
-          if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
-          const inputKepsek = document.getElementById('id_kepsek_' + npsn)?.value;
-          if (inputKepsek !== undefined) school.kepalaSekolah = inputKepsek;
-          const inputAkred = document.getElementById('id_akreditasi_' + npsn)?.value;
-          if (inputAkred !== undefined) school.akreditasi = inputAkred;
-          const inputThnAkred = document.getElementById('id_thnakreditasi_' + npsn)?.value;
-          if (inputThnAkred !== undefined) school.tahunAkreditasi = inputThnAkred;
+    if (school) {
+      // Ambil data teks lain yang sedang diketik user di form agar tidak ikut ke-reset
+      const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
+      if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
+      
+      const inputKepsek = document.getElementById('id_kepsek_' + npsn)?.value;
+      if (inputKepsek !== undefined) school.kepalaSekolah = inputKepsek;
+      
+      const inputAkred = document.getElementById('id_akreditasi_' + npsn)?.value;
+      if (inputAkred !== undefined) school.akreditasi = inputAkred;
+      
+      const inputThnAkred = document.getElementById('id_thnakreditasi_' + npsn)?.value;
+      if (inputThnAkred !== undefined) school.tahunAkreditasi = inputThnAkred;
 
-          if (!school.legalitas) school.legalitas = {};
-          school.legalitas[fieldKey] = fileName;
+      if (!school.legalitas) school.legalitas = {};
 
-          if (fieldKey === 'fileAkreditasi') { school.legalitas.statusAkreditasi = "Menunggu Validasi"; school.legalitas.notesAkreditasi = ""; }
-          if (fieldKey === 'fileSKPendirian') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
-          if (fieldKey === 'fileSKIzin') { school.legalitas.statusSKIzin = "Menunggu Validasi"; school.legalitas.notesSKIzin = ""; }
+      // AMBIL JUGA NOMOR & TANGGAL SK AGAR TIDAK KETIK RE-SET SAAT UPLOAD FILE
+      school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn)?.value || school.legalitas.skPendirian || "-";
+      school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn)?.value || school.legalitas.tglSK || "-";
+      school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || school.legalitas.skIzin || "-";
+      school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || school.legalitas.tglSKIzin || "-";
 
-          markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
+      // Simpan nama file ke properti legalitas yang sesuai
+      school.legalitas[fieldKey] = fileName;
 
-          // Payload kirim ke Google Apps Script
-          const payload = {
-            updatedModule: "identitas",
-            kategoriFolder: katFolder,
-            fileName: fileName,
-            fileData: base64String,
-            tahunAjaran: ta,
-            npsn: school.npsn,
-            namaSekolah: school.nama,
-            cabang: school.cabang,
-            alamatSekolah: school.alamatSekolah,
-            kepalaSekolah: school.kepalaSekolah,
-            akreditasi: school.akreditasi,
-            tahunAkreditasi: school.tahunAkreditasi,
-            legalitas: school.legalitas
-          };
+      if (fieldKey === 'fileAkreditasi') { school.legalitas.statusAkreditasi = "Menunggu Validasi"; school.legalitas.notesAkreditasi = ""; }
+      if (fieldKey === 'fileSKPendirian') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
+      if (fieldKey === 'fileSKIzin') { school.legalitas.statusSKIzin = "Menunggu Validasi"; school.legalitas.notesSKIzin = ""; }
 
-          fetch(GOOGLE_SHEET_WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          }).then(() => {
-            alert('Berkas "' + fileName + '" Berhasil Diunggah & Masuk ke Drive Pusat!');
-          });
+      markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
 
-          saveDB();
-          renderSidebar();
-          renderPage('identitas');
-        }
+      // Payload kirim ke Google Apps Script
+      const payload = {
+        updatedModule: "identitas",
+        kategoriFolder: katFolder,
+        fileName: fileName,
+        fileData: base64String,
+        tahunAjaran: ta,
+        npsn: school.npsn,
+        namaSekolah: school.nama,
+        cabang: school.cabang,
+        alamatSekolah: school.alamatSekolah,
+        kepalaSekolah: school.kepalaSekolah,
+        akreditasi: school.akreditasi,
+        tahunAkreditasi: school.tahunAkreditasi,
+        legalitas: school.legalitas
       };
-      reader.readAsDataURL(file);
+
+      fetch(GOOGLE_SHEET_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        alert('Berkas "' + fileName + '" Berhasil Diunggah & Masuk ke Drive Pusat!');
+      });
+
+      saveDB();
+      renderSidebar();
+      renderPage('identitas');
+    }
+  };
+  reader.readAsDataURL(file);
     }
 
 function saveIdentitasData(e, npsn) {
