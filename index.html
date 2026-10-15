@@ -1130,6 +1130,7 @@
         }
 
         markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
+        syncToGoogleSheet(school, ta);
         saveDB();
         alert('Berkas "' + fileName + '" Berhasil Diunggah! Status berubah menjadi Menunggu Validasi dari Admin Pusat.');
         renderSidebar();
