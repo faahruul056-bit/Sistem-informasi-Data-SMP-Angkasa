@@ -1215,6 +1215,7 @@
         school.siswa.r9 = parseInt(document.getElementById('r9_' + npsn).value) || 0;
 
         markSchoolDataUpdated(school, "Peserta Didik & Rombel", "siswa");
+        syncToGoogleSheet(school, ta);
         saveDB();
         alert("Data Peserta Didik Berhasil Diperbarui!");
         renderPage('peserta_didik');
@@ -1298,6 +1299,7 @@
         school.tendik.dpkPns = tDpkPns;
 
         markSchoolDataUpdated(school, "Pendidik & Tendik", "pendidik");
+        syncToGoogleSheet(school, ta);
         saveDB();
         alert("Data Pendidik & Tendik Berhasil Diperbarui!");
         renderPage('pendidik_tendik');
@@ -1595,6 +1597,7 @@
         school.keuangan.dspSiswa3 = parseInt(document.getElementById('dspSiswa3_' + npsn).value) || 0;
 
         markSchoolDataUpdated(school, "Data Keuangan", "keuangan");
+        syncToGoogleSheet(school, ta);
         saveDB();
         alert("Rincian Data Keuangan Berhasil Diperbarui!");
         renderPage('keuangan');
