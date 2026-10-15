@@ -193,6 +193,29 @@
   <script>
     lucide.createIcons();
 
+    // URL WEB APP GOOGLE APPS SCRIPT DATABASE
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyK1X4If9XPwXeSzNig4bvCTOS8iNsb5LuNmqwVYTqoSckVSr6ozMOqDBYfJklIZwvpLA/exec";
+
+    // Fungsi Sinkronisasi Akun ke Google Spreadsheet (Tab Data_Akun)
+    function syncAccountToSheet(accountObj) {
+      const payload = {
+        updatedModule: "akun",
+        npsn: accountObj.npsn || accountObj.user,
+        user: accountObj.user,
+        nama: accountObj.nama,
+        role: accountObj.role,
+        pass: accountObj.pass,
+        cabang: accountObj.cabang
+      };
+
+      fetch(GOOGLE_SHEET_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(err => console.error("Gagal sinkron akun:", err));
+    }
+
     const listSekolahMaster = [
       { nama: "SMP ANGKASA SOEWONDO MEDAN", lanud: "SOEWONDO MEDAN" },
       { nama: "SMP ANGKASA SUTAN SJAHRIR", lanud: "SUTAN SJAHRIR" },
@@ -228,7 +251,6 @@
       document.getElementById('regCabang').value = found ? found.lanud : '';
     }
 
-    // INISIALISASI DATABASE MURNI (TANPA FILTER HAPUS OTOMATIS)
     function initUsersDB() {
       let usersDB = JSON.parse(localStorage.getItem('sidsa_users_v10'));
       
@@ -326,7 +348,6 @@
 
       let usersDB = initUsersDB();
       
-      // CEK DUPLIKASI NAMA SEKOLAH ATAU NPSN
       const existsNpsn = usersDB.find(u => u.npsn === npsn || u.user.toLowerCase() === npsn.toLowerCase());
       const existsNama = usersDB.find(u => u.nama.toUpperCase() === nama.toUpperCase());
 
@@ -346,6 +367,9 @@
 
       usersDB.push(newAccount);
       localStorage.setItem('sidsa_users_v10', JSON.stringify(usersDB));
+
+      // Sinkronisasi akun baru ke Google Sheet (Tab Data_Akun)[cite: 1]
+      syncAccountToSheet(newAccount);
 
       alert('Pendaftaran Berhasil!\n\nSekolah: ' + nama + '\nNPSN (Username): ' + npsn + '\n\nSilakan masuk menggunakan akun tersebut.');
       switchTab('login');
