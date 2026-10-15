@@ -1173,29 +1173,37 @@
       reader.readAsDataURL(file);
     }
 
-    function saveIdentitasData(e, npsn) {
-      e.preventDefault();
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      if (school) {
-        const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
-        if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
+function saveIdentitasData(e, npsn) {
+  e.preventDefault();
+  const taList = Object.keys(db).sort().reverse();
+  const ta = document.getElementById('filterTA')?.value || taList[0];
+  const school = db[ta].find(s => s.npsn === npsn);
+  
+  if (school) {
+    const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
+    if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
 
-        school.kepalaSekolah = document.getElementById('id_kepsek_' + npsn).value;
-        school.akreditasi = document.getElementById('id_akreditasi_' + npsn).value;
-        school.tahunAkreditasi = document.getElementById('id_thnakreditasi_' + npsn).value;
-        if (!school.legalitas) school.legalitas = {};
-        school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn).value;
-        school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn).value;
-        school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn).value;
-        school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn).value;
+    school.kepalaSekolah = document.getElementById('id_kepsek_' + npsn).value;
+    school.akreditasi = document.getElementById('id_akreditasi_' + npsn).value;
+    school.tahunAkreditasi = document.getElementById('id_thnakreditasi_' + npsn).value;
 
-        markSchoolDataUpdated(school, "Identitas & Legalitas", "identitas");
-        saveDB();
-        alert("Data Identitas & Legalitas Sekolah Berhasil Disimpan!");
-        renderPage('identitas');
-      }
+    if (!school.legalitas) school.legalitas = {};
+    
+    // AMBIL DATA SK PENDIRIAN & SK IZIN DARI INPUT FORM DENGAN BENAR
+    school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn)?.value || "-";
+    school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn)?.value || "-";
+    school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || "-";
+    school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || "-";
+
+    markSchoolDataUpdated(school, "Identitas & Legalitas", "identitas");
+    
+    // PASTIKAN SINKRONISASI KE GOOGLE SHEET IKUT DIPANGGIL DI SINI
+    syncToGoogleSheet(school, ta, "identitas"); 
+
+    saveDB();
+    alert("Data Identitas & Legalitas Sekolah Berhasil Disimpan & Disinkronkan!");
+    renderPage('identitas');
+  }
     }
 
     function renderPesertaDidikModule(list) {
