@@ -241,8 +241,7 @@
         siswa: schoolObj.siswa,
         pendidik: schoolObj.pendidik,
         tendik: schoolObj.tendik,
-        grandTotalKas: grandTotalKas,
-        dokumenLaporan: schoolObj.dokumenLaporan
+        grandTotalKas: grandTotalKas
       };
 
       fetch(GOOGLE_SHEET_WEB_APP_URL, {
@@ -1666,7 +1665,6 @@
           fileName: fileName
         };
         markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen");
-        syncToGoogleSheet(school, ta);
         saveDB();
         alert('Berkas "' + fileName + '" berhasil diunggah! Status berubah menjadi Menunggu Validasi.');
         renderSidebar();
