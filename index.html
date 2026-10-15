@@ -1666,6 +1666,7 @@
           fileName: fileName
         };
         markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen");
+        syncToGoogleSheet(school, ta); //
         saveDB();
         alert('Berkas "' + fileName + '" berhasil diunggah! Status berubah menjadi Menunggu Validasi.');
         renderSidebar();
