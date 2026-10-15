@@ -397,18 +397,24 @@
       };
     }
 
-    let activeTab = 'dashboard';
-    let db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
+let activeTab = 'dashboard';
+let db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
 
-    if (db["2026/2027"]) {
-      if (!db["2026-2027"] || db["2026-2027"].length === 0) {
-        db["2026-2027"] = db["2026/2027"];
-      }
-      delete db["2026/2027"];
-    }
+if (db["2026/2027"]) {
+  if (!db["2026-2027"] || db["2026-2027"].length === 0) {
+    db["2026-2027"] = db["2026/2027"];
+  }
+  delete db["2026/2027"];
+}
 
-    if (!db || typeof db !== 'object') {
-      db = {};
+if (!db || typeof db !== 'object') {
+  db = {};
+}
+
+// PASTIKAN MENGECEK JUMLAH KUNCI (KEYS) OBJECT-NYA
+if (Object.keys(db).length === 0) {
+  db["2026-2027"] = [];
+}
     }
 
     if (currentSession.role === 'SEKOLAH') {
