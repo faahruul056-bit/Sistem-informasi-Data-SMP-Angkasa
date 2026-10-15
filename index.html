@@ -274,10 +274,10 @@
       if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
       if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
 
-      // Meneruskan moduleKey agar Google Sheet mencatat ke tab yang tepat
+      // PERBAIKAN DI SINI: Sertakan moduleKey agar terkirim ke Google Sheet
       const taList = Object.keys(db).sort().reverse();
       const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
-      syncToGoogleSheet(school, currentTA, moduleKey);
+      syncToGoogleSheet(school, currentTA, moduleKey); 
     }
     // FUNGSI SINKRONISASI AKUN (BERDIRI SENDIRI DI LUAR)
     function syncAccountToSheet(accountObj) {
@@ -1151,7 +1151,7 @@
         }
 
         markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
-        syncToGoogleSheet(school, ta);
+        syncToGoogleSheet(school, ta, "identitas"); //
         saveDB();
         alert('Berkas "' + fileName + '" Berhasil Diunggah! Status berubah menjadi Menunggu Validasi dari Admin Pusat.');
         renderSidebar();
@@ -1237,7 +1237,7 @@
         school.siswa.r9 = parseInt(document.getElementById('r9_' + npsn).value) || 0;
 
         markSchoolDataUpdated(school, "Peserta Didik & Rombel", "siswa");
-        syncToGoogleSheet(school, ta);
+        syncToGoogleSheet(school, ta, "siswa"); //
         saveDB();
         alert("Data Peserta Didik Berhasil Diperbarui!");
         renderPage('peserta_didik');
@@ -1321,7 +1321,7 @@
         school.tendik.dpkPns = tDpkPns;
 
         markSchoolDataUpdated(school, "Pendidik & Tendik", "pendidik");
-        syncToGoogleSheet(school, ta);
+        syncToGoogleSheet(school, ta, "pendidik"); //
         saveDB();
         alert("Data Pendidik & Tendik Berhasil Diperbarui!");
         renderPage('pendidik_tendik');
@@ -1619,7 +1619,7 @@
         school.keuangan.dspSiswa3 = parseInt(document.getElementById('dspSiswa3_' + npsn).value) || 0;
 
         markSchoolDataUpdated(school, "Data Keuangan", "keuangan");
-        syncToGoogleSheet(school, ta);
+        syncToGoogleSheet(school, ta, "keuangan"); //
         saveDB();
         alert("Rincian Data Keuangan Berhasil Diperbarui!");
         renderPage('keuangan');
@@ -1687,7 +1687,7 @@
           fileName: fileName
         };
         markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen");
-        syncToGoogleSheet(school, ta); //
+        syncToGoogleSheet(school, ta, "dokumen"); //
         saveDB();
         alert('Berkas "' + fileName + '" berhasil diunggah! Status berubah menjadi Menunggu Validasi.');
         renderSidebar();
