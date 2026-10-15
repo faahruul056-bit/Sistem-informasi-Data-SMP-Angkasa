@@ -229,7 +229,6 @@
       const totalRPSS = (schoolObj.keuangan?.rpssSumber01 || 0) + (schoolObj.keuangan?.rpssSumber02 || 0) + (schoolObj.keuangan?.rpssSumber03 || 0);
       const grandTotalKas = (totalDopBln * 12) + totalDopThn + totalDSP + totalRPSS;
 
-      // Membawa penanda updatedModule agar backend tahu harus masuk ke tab mana
       const payload = {
         updatedModule: moduleName || "sekolah",
         tahunAjaran: tahunAjaranStr,
@@ -267,8 +266,7 @@
       })
       .catch(err => {
         console.error("Gagal sinkronisasi Google Sheet:", err);
-      });
-    }
+      });    }
 
     function markSchoolDataUpdated(school, moduleName, moduleKey) {
       const timeStr = new Date().toLocaleString('id-ID');
