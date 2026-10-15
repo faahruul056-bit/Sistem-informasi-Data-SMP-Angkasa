@@ -243,16 +243,8 @@
         tendik: schoolObj.tendik,
         grandTotalKas: grandTotalKas
       };
-    function syncAccountToSheet(accountObj) {
-      const payload = {
-        updatedModule: "akun",
-        npsn: accountObj.npsn || accountObj.user,
-        user: accountObj.user,
-        nama: accountObj.nama,
-        role: accountObj.role,
-        pass: accountObj.pass,
-        cabang: accountObj.cabang
-      };
+
+      // Pastikan fetch syncToGoogleSheet ada di sini
       fetch(GOOGLE_SHEET_WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -264,6 +256,32 @@
       })
       .catch(err => {
         console.error("Gagal sinkronisasi Google Sheet:", err);
+      });
+    } // <--- TUTUP KURUNG KURAWAL syncToGoogleSheet DISINI!
+
+    // FUNGSI INI BERDIRI SENDIRI DI LUAR (SEJAJAR)
+    function syncAccountToSheet(accountObj) {
+      const payload = {
+        updatedModule: "akun",
+        npsn: accountObj.npsn || accountObj.user,
+        user: accountObj.user,
+        nama: accountObj.nama,
+        role: accountObj.role,
+        pass: accountObj.pass,
+        cabang: accountObj.cabang
+      };
+      
+      fetch(GOOGLE_SHEET_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        console.log("Data akun berhasil disinkronkan ke Spreadsheet Google.");
+      })
+      .catch(err => {
+        console.error("Gagal sinkronisasi akun Google Sheet:", err);
       });
     }
 
