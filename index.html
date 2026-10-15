@@ -188,7 +188,7 @@
     // URL WEB APP GOOGLE APPS SCRIPT DATABASE
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyK1X4If9XPwXeSzNig4bvCTOS8iNsb5LuNmqwVYTqoSckVSr6ozMOqDBYfJklIZwvpLA/exec";
 
-    function syncToGoogleSheet(schoolObj, tahunAjaranStr) {
+    function syncToGoogleSheet(schoolObj, tahunAjaranStr, moduleName) {
       if (!schoolObj) return;
 
       const totSiswa = (schoolObj.siswa.k7L + schoolObj.siswa.k7P) + (schoolObj.siswa.k8L + schoolObj.siswa.k8P) + (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
@@ -229,7 +229,9 @@
       const totalRPSS = (schoolObj.keuangan?.rpssSumber01 || 0) + (schoolObj.keuangan?.rpssSumber02 || 0) + (schoolObj.keuangan?.rpssSumber03 || 0);
       const grandTotalKas = (totalDopBln * 12) + totalDopThn + totalDSP + totalRPSS;
 
+      // Membawa penanda updatedModule agar backend tahu harus masuk ke tab mana
       const payload = {
+        updatedModule: moduleName || "sekolah",
         tahunAjaran: tahunAjaranStr,
         npsn: schoolObj.npsn,
         namaSekolah: schoolObj.nama,
@@ -238,6 +240,7 @@
         kepalaSekolah: schoolObj.kepalaSekolah,
         akreditasi: schoolObj.akreditasi,
         tahunAkreditasi: schoolObj.tahunAkreditasi,
+        legalitas: schoolObj.legalitas,
         siswa: schoolObj.siswa,
         pendidik: schoolObj.pendidik,
         tendik: schoolObj.tendik,
@@ -247,17 +250,18 @@
 
       fetch(GOOGLE_SHEET_WEB_APP_URL, {
         method: "POST",
-        mode: "no-cors", //
-        headers: { "Content-Type": "application/json" },
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
       })
       .then(() => {
-        console.log("Data berhasil disinkronkan ke Spreadsheet Google.");
+        console.log(`Modul [${moduleName}] berhasil disinkronkan ke Spreadsheet.`);
       })
       .catch(err => {
         console.error("Gagal sinkronisasi Google Sheet:", err);
       });
     }
+
     function markSchoolDataUpdated(school, moduleName, moduleKey) {
       const timeStr = new Date().toLocaleString('id-ID');
       school.lastUpdate = timeStr;
@@ -270,7 +274,7 @@
       if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
       if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
 
-      // Kirim parameter moduleKey agar backend tahu tab tujuannya
+      // Meneruskan moduleKey agar Google Sheet mencatat ke tab yang tepat
       const taList = Object.keys(db).sort().reverse();
       const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
       syncToGoogleSheet(school, currentTA, moduleKey);
