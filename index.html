@@ -258,7 +258,23 @@
         console.error("Gagal sinkronisasi Google Sheet:", err);
       });
     }
+    function markSchoolDataUpdated(school, moduleName, moduleKey) {
+      const timeStr = new Date().toLocaleString('id-ID');
+      school.lastUpdate = timeStr;
+      school.hasDataRevision = true;
+      school.lastUpdatedModule = moduleName || "Data Sekolah";
 
+      if (moduleKey === 'identitas') school.lastUpdateIdentitas = timeStr;
+      if (moduleKey === 'siswa') school.lastUpdateSiswa = timeStr;
+      if (moduleKey === 'pendidik') school.lastUpdatePendidik = timeStr;
+      if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
+      if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
+
+      // Kirim parameter moduleKey agar backend tahu tab tujuannya
+      const taList = Object.keys(db).sort().reverse();
+      const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
+      syncToGoogleSheet(school, currentTA, moduleKey);
+    }
     // FUNGSI SINKRONISASI AKUN (BERDIRI SENDIRI DI LUAR)
     function syncAccountToSheet(accountObj) {
       const payload = {
