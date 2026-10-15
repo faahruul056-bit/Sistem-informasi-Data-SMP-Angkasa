@@ -1677,23 +1677,53 @@
       const taList = Object.keys(db).sort().reverse();
       const ta = document.getElementById('filterTA')?.value || taList[0];
       const school = db[ta].find(s => s.npsn === npsn);
-      const fileName = inputElem.files[0] ? inputElem.files[0].name : "Dokumen_Terunggah.pdf";
+      const file = inputElem.files[0];
 
-      if (school) {
-        if (!school.dokumenLaporan) school.dokumenLaporan = {};
-        school.dokumenLaporan[docKey] = {
-          status: "Menunggu Validasi",
-          notes: "",
-          fileName: fileName
-        };
-        markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen");
-        syncToGoogleSheet(school, ta, "dokumen"); //
-        saveDB();
-        alert('Berkas "' + fileName + '" berhasil diunggah! Status berubah menjadi Menunggu Validasi.');
-        renderSidebar();
-        renderPage('dokumen_tambahan');
-      }
-    }
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64String = e.target.result; // Data file dalam bentuk Base64
+        const fileName = file.name;
+
+        if (school) {
+          if (!school.dokumenLaporan) school.dokumenLaporan = {};
+          school.dokumenLaporan[docKey] = {
+            status: "Menunggu Validasi",
+            notes: "",
+            fileName: fileName
+          };
+          
+          markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen");
+
+          // Kirim data lengkap termasuk file Base64 ke Apps Script
+          const payload = {
+            updatedModule: "dokumen",
+            docKey: docKey,
+            fileName: fileName,
+            fileData: base64String, // Kirim file biner/base64
+            tahunAjaran: ta,
+            npsn: school.npsn,
+            namaSekolah: school.nama,
+            // ... data sekolah lainnya ...
+          };
+
+          fetch(GOOGLE_SHEET_WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          }).then(() => {
+            alert('Berkas "' + fileName + '" berhasil diunggah dan dikirim ke sistem pusat!');
+          });
+
+          saveDB();
+          renderSidebar();
+          renderPage('dokumen_tambahan');
+        }
+      };
+      reader.readAsDataURL(file); // Membaca file jadi Base64
+    }    }
 
     function renderAnalisisModule(list, stats) {
       let totalValidDocs = 0;
