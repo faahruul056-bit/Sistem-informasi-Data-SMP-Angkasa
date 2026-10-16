@@ -378,8 +378,32 @@
     }
 
     window.onload = function() {
-      initUsersDB();
-      populateSchoolDropdown();
+      // TARIK DATABASE DARI CLOUD (SPREADSHEET) TERLEBIH DAHULU
+      fetch(GOOGLE_SHEET_WEB_APP_URL + "?action=getDb", {
+        method: "GET"
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if (resData.status === "success" && resData.db && Object.keys(resData.db).length > 0) {
+          db = resData.db;
+          saveDB(); // Simpan ke cache lokal device
+        }
+        // Lanjutkan render halaman setelah data siap
+        renderHeaderControls();
+        renderSidebar();
+        renderFilterControls();
+        renderPage('dashboard');
+        lucide.createIcons();
+      })
+      .catch(err => {
+        console.log("Gagal sinkron dari cloud, menggunakan data lokal:", err);
+        // Tetap jalankan render dengan data lokal jika offline/gagal koneksi
+        renderHeaderControls();
+        renderSidebar();
+        renderFilterControls();
+        renderPage('dashboard');
+        lucide.createIcons();
+      });
     };
   </script>
 </body>
