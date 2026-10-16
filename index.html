@@ -261,7 +261,48 @@
         console.error("Gagal sinkronisasi Google Sheet:", err);
       });
     }
+    function fetchCloudDataAndInit() {
+      const taList = Object.keys(db).sort().reverse();
+      const currentTA = taList[0] || "2026-2027";
 
+      if (currentSession.role === 'SEKOLAH') {
+        const fetchUrl = `${GOOGLE_SHEET_WEB_APP_URL}?action=getdata&npsn=${encodeURIComponent(currentSession.npsn)}&tahun=${encodeURIComponent(currentTA)}`;
+        
+        fetch(fetchUrl)
+          .then(res => res.json())
+          .then(resData => {
+            if (resData && resData.status === "success" && resData.data) {
+              if (!db[currentTA]) db[currentTA] = [];
+              let idx = db[currentTA].findIndex(s => s.npsn === currentSession.npsn);
+              if (idx !== -1) {
+                db[currentTA][idx] = resData.data;
+              } else {
+                db[currentTA].push(resData.data);
+              }
+              saveDB();
+            }
+            initUIAfterSync();
+          })
+          .catch(err => {
+            console.warn("Gagal ambil data cloud, menggunakan data lokal:", err);
+            initUIAfterSync();
+          });
+      } else {
+        initUIAfterSync();
+      }
+    }
+
+    function initUIAfterSync() {
+      renderHeaderControls();
+      renderSidebar();
+      renderFilterControls();
+      renderPage('dashboard');
+      lucide.createIcons();
+    }
+    // ==========================================
+
+    function markSchoolDataUpdated(school, moduleName, moduleKey) {
+      // ... (lanjutan kode aslinya)
     function markSchoolDataUpdated(school, moduleName, moduleKey) {
       const timeStr = new Date().toLocaleString('id-ID');
       school.lastUpdate = timeStr;
@@ -576,11 +617,7 @@
     }
 
     window.onload = function() {
-      renderHeaderControls();
-      renderSidebar();
-      renderFilterControls();
-      renderPage('dashboard');
-      lucide.createIcons();
+      fetchCloudDataAndInit();
     };
 
     const menuItems = [
