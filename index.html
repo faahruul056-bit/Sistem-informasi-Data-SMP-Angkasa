@@ -579,32 +579,22 @@
     }
 
     window.onload = function() {
-      // Tarik database terbaru dari Google Sheets (Cloud) saat halaman dimuat
+      // Ambil data lokal yang sudah ada terlebih dahulu
+      let localDb = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
+
+      // Tarik database terbaru dari Google Sheets (Cloud)
       fetch(GOOGLE_SHEET_WEB_APP_URL + "?action=getAllData")
         .then(res => res.json())
         .then(resData => {
           if (resData.status === "success" && resData.db) {
-            db = resData.db;
-            saveDB(); // Perbarui cache lokal dengan data cloud terbaru
-            
-            // Jika yang login adalah sekolah, pastikan data sekolah tersebut langsung terisi dari db cloud
-            const { role, npsn } = parseRoleInfo();
-            if (role === 'SEKOLAH') {
-              const taList = Object.keys(db);
-              if (taList.length > 0) {
-                const latestTA = taList.sort().reverse()[0];
-                if (!db[latestTA]) db[latestTA] = [];
-                const exists = db[latestTA].find(s => s.npsn === npsn);
-                if (!exists) {
-                  // Jika belum ada di TA tersebut, ambil default atau biarkan kosong sesuai tarikan cloud
-                  console.log("Data sekolah di cloud untuk TA ini belum ada, menggunakan inisialisasi.");
-                }
-              }
-            }
+            // Gabungkan key tahun ajaran dari cloud dan local agar TA baru dari browser lain tidak hilang
+            const mergedDb = { ...resData.db, ...localDb };
+            db = mergedDb;
+            saveDB(); // Simpan hasil gabungan ke localStorage
           }
         })
         .catch(err => {
-          console.warn("Gagal mengambil data cloud, menggunakan database lokal cadangan:", err);
+          console.warn("Gagal mengambil data cloud, menggunakan database lokal:", err);
         })
         .finally(() => {
           renderHeaderControls();
