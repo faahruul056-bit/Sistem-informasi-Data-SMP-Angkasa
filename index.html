@@ -191,11 +191,9 @@
     function syncToGoogleSheet(schoolObj, tahunAjaranStr, moduleName) {
       if (!schoolObj) return;
       
-      // JANGAN KIRIM DATA PUSAT ATAU ADMIN KE TAB LAPORAN SEKOLAH
       if (schoolObj.npsn === 'PUSAT' || schoolObj.npsn === '-' || !schoolObj.npsn) return;
 
       const totSiswa = (schoolObj.siswa.k7L + schoolObj.siswa.k7P) + (schoolObj.siswa.k8L + schoolObj.siswa.k8P) + (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
-      const totRombel = schoolObj.siswa.r7 + schoolObj.siswa.r8 + schoolObj.siswa.r9;
       
       const u7 = schoolObj.keuangan?.siswaUmum7 ?? (schoolObj.siswa.k7L + schoolObj.siswa.k7P);
       const u8 = schoolObj.keuangan?.siswaUmum8 ?? (schoolObj.siswa.k8L + schoolObj.siswa.k8P);
@@ -213,7 +211,7 @@
       if (schoolObj.keuangan?.dopLainnyaList && Array.isArray(schoolObj.keuangan.dopLainnyaList)) {
         schoolObj.keuangan.dopLainnyaList.forEach(item => {
           const nom = parseFloat(item.nominal) || 0;
-          const jS = parseInt(item.jumlahSiswa) || totSiswa;
+          const jS = parseInt(item.jumlahSiswa) || 0;
           if ((item.tipe || 'Bulanan') === 'Bulanan') dopLainBln += (nom * jS);
           else dopLainThn += (nom * jS);
         });
@@ -232,7 +230,7 @@
       const totalRPSS = (schoolObj.keuangan?.rpssSumber01 || 0) + (schoolObj.keuangan?.rpssSumber02 || 0) + (schoolObj.keuangan?.rpssSumber03 || 0);
       const grandTotalKas = (totalDopBln * 12) + totalDopThn + totalDSP + totalRPSS;
 
-      // Membawa penanda updatedModule agar backend tahu harus masuk ke tab mana
+      // Payload lengkap termasuk properti 'keuangan'
       const payload = {
         updatedModule: moduleName || "sekolah",
         tahunAjaran: tahunAjaranStr,
@@ -247,6 +245,7 @@
         siswa: schoolObj.siswa,
         pendidik: schoolObj.pendidik,
         tendik: schoolObj.tendik,
+        keuangan: schoolObj.keuangan, // <--- WAJIB ADA AGAR SPREADSHEET TIDAK NOL
         grandTotalKas: grandTotalKas,
         dokumenLaporan: schoolObj.dokumenLaporan
       };
