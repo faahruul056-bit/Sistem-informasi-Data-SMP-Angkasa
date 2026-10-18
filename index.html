@@ -1680,62 +1680,76 @@ function saveIdentitasData(e, npsn) {
       const taList = Object.keys(db).sort().reverse();
       const ta = document.getElementById('filterTA')?.value || taList[0];
       const school = db[ta].find(s => s.npsn === npsn);
+      
       if (school) {
-        const u7Input = parseInt(document.getElementById('siswaUmum7_' + npsn).value) || 0;
-        const u8Input = parseInt(document.getElementById('siswaUmum8_' + npsn).value) || 0;
-        const u9Input = parseInt(document.getElementById('siswaUmum9_' + npsn).value) || 0;
+        // Ambil input jumlah siswa Umum
+        const u7Input = parseInt(document.getElementById('siswaUmum7_' + npsn)?.value) || 0;
+        const u8Input = parseInt(document.getElementById('siswaUmum8_' + npsn)?.value) || 0;
+        const u9Input = parseInt(document.getElementById('siswaUmum9_' + npsn)?.value) || 0;
 
-        const t7Input = parseInt(document.getElementById('siswaTniau7_' + npsn).value) || 0;
-        const t8Input = parseInt(document.getElementById('siswaTniau8_' + npsn).value) || 0;
-        const t9Input = parseInt(document.getElementById('siswaTniau9_' + npsn).value) || 0;
+        // Ambil input jumlah siswa TNI AU
+        const t7Input = parseInt(document.getElementById('siswaTniau7_' + npsn)?.value) || 0;
+        const t8Input = parseInt(document.getElementById('siswaTniau8_' + npsn)?.value) || 0;
+        const t9Input = parseInt(document.getElementById('siswaTniau9_' + npsn)?.value) || 0;
 
-        const actualK7 = school.siswa.k7L + school.siswa.k7P;
-        const actualK8 = school.siswa.k8L + school.siswa.k8P;
-        const actualK9 = school.siswa.k9L + school.siswa.k9P;
+        // Hitung total siswa riil dari modul Peserta Didik
+        const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
+        const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
+        const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
         const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
 
+        // Hitung total input Umum + TNI AU per kelas
         const totalInputK7 = u7Input + t7Input;
         const totalInputK8 = u8Input + t8Input;
         const totalInputK9 = u9Input + t9Input;
 
-        // 1. Validasi Umum + TNI AU per Kelas
+        // 1. Validasi Ketat Umum + TNI AU per Kelas
         if (totalInputK7 !== actualK7 || totalInputK8 !== actualK8 || totalInputK9 !== actualK9) {
-          alert("VALIDASI JUMLAH SISWA GAGAL!\n\nTotal jumlah siswa per kelas di modul Keuangan (Umum + TNI AU) harus sama persis dengan total data di modul Peserta Didik:\n- Kelas VII: Input (" + formatAngka(totalInputK7) + ") vs Riil (" + formatAngka(actualK7) + ")\n- Kelas VIII: Input (" + formatAngka(totalInputK8) + ") vs Riil (" + formatAngka(actualK8) + ")\n- Kelas IX: Input (" + formatAngka(totalInputK9) + ") vs Riil (" + formatAngka(actualK9) + ")");
+          alert("VALIDASI JUMLAH SISWA GAGAL!\n\nTotal jumlah siswa per kelas (Umum + TNI AU) harus sama persis dengan modul Peserta Didik:\n- Kelas VII: Input (" + totalInputK7 + ") vs Riil (" + actualK7 + ")\n- Kelas VIII: Input (" + totalInputK8 + ") vs Riil (" + actualK8 + ")\n- Kelas IX: Input (" + totalInputK9 + ") vs Riil (" + actualK9 + ")");
           return;
         }
 
-        // 2. Validasi Ketat DOP Lainnya (Tidak boleh melebihi siswa riil di kelas targetnya)
-        if (school.keuangan?.dopLainnyaList && school.keuangan.dopLainnyaList.length > 0) {
-          for (let i = 0; i < school.keuangan.dopLainnyaList.length; i++) {
-            let item = school.keuangan.dopLainnyaList[i];
-            let jS = parseInt(item.jumlahSiswa) || 0;
-            let targetKelas = item.kelas || 'Semua';
-            
-            let maxAllowed = totalSiswaGlobal;
-            if (targetKelas === '7') maxAllowed = actualK7;
-            if (targetKelas === '8') maxAllowed = actualK8;
-            if (targetKelas === '9') maxAllowed = actualK9;
+        if (!school.keuangan) school.keuangan = {};
 
-            if (jS > maxAllowed) {
-              alert(`VALIDASI DOP LAINNYA GAGAL!\n\nKategori "${item.keterangan || 'Ke- ' + (i+1)}": Jumlah siswa (${formatAngka(jS)}) melampaui batas maksimum siswa riil pada Target Kelas ${targetKelas} (${formatAngka(maxAllowed)} siswa).`);
-              return;
-            }
+        // Ambil array DOP Lainnya yang diinput user di tabel dinamis
+        // Pastikan elemen input jumlah siswa DOP lain di HTML memiliki class atau id penanda, contoh: class="dop-lain-siswa"
+        const dopLainRows = document.querySelectorAll(`#dopLainTable_${npsn} tr, .dop-lain-row`); 
+        // Atau ambil langsung dari properti objek jika dirender via state:
+        let dopList = school.keuangan.dopLainnyaList || [];
+
+        // 2. Validasi Ketat Jumlah Siswa DOP Lainnya agar terkunci dan tidak jebol
+        for (let i = 0; i < dopList.length; i++) {
+          let item = dopList[i];
+          let jumlahSiswaDopLain = parseInt(item.jumlahSiswa) || 0;
+          let targetKelas = String(item.kelas || 'Semua');
+
+          let maxAllowed = totalSiswaGlobal;
+          if (targetKelas === '7') maxAllowed = actualK7;
+          else if (targetKelas === '8') maxAllowed = actualK8;
+          else if (targetKelas === '9') maxAllowed = actualK9;
+
+          if (jumlahSiswaDopLain > maxAllowed) {
+            alert(`VALIDASI GAGAL PADA DOP LAINNYA!\n\nKaris/Kategori ke-${i+1}: Jumlah siswa yang dimasukkan (${jumlahSiswaDopLain}) melebihi kapasitas maksimal siswa riil pada Kelas ${targetKelas} (${maxAllowed} siswa).`);
+            return;
           }
         }
 
-        if (!school.keuangan) school.keuangan = {};
+        // Simpan nilai inputan keuangan ke object school.keuangan
+        school.keuangan.siswaUmum7 = u7Input;
+        school.keuangan.siswaUmum8 = u8Input;
+        school.keuangan.siswaUmum9 = u9Input;
+        school.keuangan.siswaTniau7 = t7Input;
+        school.keuangan.siswaTniau8 = t8Input;
+        school.keuangan.siswaTniau9 = t9Input;
         
-        // Simpan data nilai inputan form keuangan lainnya seperti biasa...
-        school.keuangan.dopUmum7 = parseInt(document.getElementById('dopUmum7_' + npsn).value) || 0;
-        school.keuangan.dopUmum8 = parseInt(document.getElementById('dopUmum8_' + npsn).value) || 0;
-        school.keuangan.dopUmum9 = parseInt(document.getElementById('dopUmum9_' + npsn).value) || 0;
-        
-        // ... (lanjutan properti keuangan lainnya) ...
+        // Simpan field keuangan lainnya...
+        school.keuangan.grandTotalKas = calculateGrandTotalKas(school);
 
         markSchoolDataUpdated(school, "Data Keuangan", "keuangan");
         syncToGoogleSheet(school, ta, "keuangan");
         saveDB();
-        alert("Rincian Data Keuangan Berhasil Diperbarui & Tervalidasi!");
+        
+        alert("Data Keuangan Berhasil Disimpan & Tervalidasi Sesuai Kapasitas Siswa Riil!");
         renderPage('keuangan');
       }
     }
