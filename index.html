@@ -576,11 +576,25 @@
     }
 
     window.onload = function() {
-      renderHeaderControls();
-      renderSidebar();
-      renderFilterControls();
-      renderPage('dashboard');
-      lucide.createIcons();
+      // Tarik database terbaru dari Google Sheets (Cloud) saat halaman dimuat
+      fetch(GOOGLE_SHEET_WEB_APP_URL + "?action=getAllData")
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.status === "success" && resData.db) {
+            db = resData.db;
+            saveDB(); // Simpan ke cache lokal untuk backup sesi offline
+          }
+        })
+        .catch(err => {
+          console.warn("Gagal mengambil data cloud, menggunakan database lokal cadangan:", err);
+        })
+        .finally(() => {
+          renderHeaderControls();
+          renderSidebar();
+          renderFilterControls();
+          renderPage('dashboard');
+          lucide.createIcons();
+        });
     };
 
     const menuItems = [
