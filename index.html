@@ -1531,14 +1531,50 @@ function saveIdentitasData(e, npsn) {
         const row = document.createElement('div');
         row.className = 'grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs';
         
+        const selSemua = (item.kelas === 'Semua' || !item.kelas) ? 'selected' : '';
+        const sel7 = item.kelas === '7' ? 'selected' : '';
+        const sel8 = item.kelas === '8' ? 'selected' : '';
+        const sel9 = item.kelas === '9' ? 'selected' : '';
+
         const selB = (item.tipe === 'Bulanan' || !item.tipe) ? 'selected' : '';
         const selT = item.tipe === 'Tahunan' ? 'selected' : '';
 
-        row.innerHTML = '<div class="col-span-4"><label class="text-[10px] text-slate-500 block mb-0.5">Keterangan Category</label><input type="text" value="' + (item.keterangan || '') + '" onchange="updateDopLainItem(\'' + npsn + '\', ' + idx + ', \'keterangan\', this.value)" class="w-full p-2 border rounded-xl"></div><div class="col-span-2"><label class="text-[10px] text-slate-500 block mb-0.5">Tipe DOP</label><select onchange="updateDopLainItem(\'' + npsn + '\', ' + idx + ', \'tipe\', this.value)" class="w-full p-2 border rounded-xl bg-white"><option value="Bulanan" ' + selB + '>Bulanan</option><option value="Tahunan" ' + selT + '>Tahunan</option></select></div><div class="col-span-3"><label class="text-[10px] text-slate-500 block mb-0.5">Nominal (Rp)</label><input type="number" value="' + (item.nominal || 0) + '" onchange="updateDopLainItem(\'' + npsn + '\', ' + idx + ', \'nominal\', this.value)" class="w-full p-2 border rounded-xl"></div><div class="col-span-2"><label class="text-[10px] text-slate-500 block mb-0.5">Jumlah Siswa</label><input type="number" value="' + (item.jumlahSiswa || 0) + '" onchange="updateDopLainItem(\'' + npsn + '\', ' + idx + ', \'jumlahSiswa\', this.value)" class="w-full p-2 border rounded-xl"></div><div class="col-span-1 text-center pt-3"><button type="button" onclick="removeDopLainRow(\'' + npsn + '\', ' + idx + ')" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>';
+        row.innerHTML = `
+          <div class="col-span-3">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Keterangan</label>
+            <input type="text" value="${item.keterangan || ''}" placeholder="Cth: Yatim/Dhuafa" onchange="updateDopLainItem('${npsn}', ${idx}, 'keterangan', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Target Kelas</label>
+            <select onchange="updateDopLainItem('${npsn}', ${idx}, 'kelas', this.value)" class="w-full p-2 border rounded-xl bg-white">
+              <option value="Semua" ${selSemua}>Semua Kelas</option>
+              <option value="7" ${sel7}>Kelas VII</option>
+              <option value="8" ${sel8}>Kelas VIII</option>
+              <option value="9" ${sel9}>Kelas IX</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Tipe</label>
+            <select onchange="updateDopLainItem('${npsn}', ${idx}, 'tipe', this.value)" class="w-full p-2 border rounded-xl bg-white">
+              <option value="Bulanan" ${selB}>Bulanan</option>
+              <option value="Tahunan" ${selT}>Tahunan</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Nominal (Rp)</label>
+            <input type="number" value="${item.nominal || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'nominal', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Jml Siswa</label>
+            <input type="number" value="${item.jumlahSiswa || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'jumlahSiswa', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-1 text-center pt-3">
+            <button type="button" onclick="removeDopLainRow('${npsn}', ${idx})" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        `;
         container.appendChild(row);
       });
-      lucide.createIcons();
-    }
+      lucide.createIcons();    }
 
     function addDopLainRow(npsn) {
       const taList = Object.keys(db).sort().reverse();
@@ -1547,7 +1583,17 @@ function saveIdentitasData(e, npsn) {
       if (school) {
         if (!school.keuangan) school.keuangan = {};
         if (!school.keuangan.dopLainnyaList) school.keuangan.dopLainnyaList = [];
-        school.keuangan.dopLainnyaList.push({ keterangan: '', tipe: 'Bulanan', nominal: 0, jumlahSiswa: 0 });
+        
+        // Ambil total siswa saat ini sebagai default jumlah siswa
+        const totalSiswa = (school.siswa.k7L + school.siswa.k7P) + (school.siswa.k8L + school.siswa.k8P) + (school.siswa.k9L + school.siswa.k9P);
+        
+        school.keuangan.dopLainnyaList.push({ 
+          keterangan: '', 
+          kelas: 'Semua', 
+          tipe: 'Bulanan', 
+          nominal: 0, 
+          jumlahSiswa: totalSiswa 
+        });
         renderDopLainRows(npsn, school.keuangan.dopLainnyaList);
       }
     }
