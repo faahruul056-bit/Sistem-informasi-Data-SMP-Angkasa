@@ -716,7 +716,22 @@
 
       saveDB();
 
-      // Sinkronisasi data awal TA baru ke Google Sheets untuk setiap sekolah
+      // SINKRONISASI KE GOOGLE SHEET BAHWA ADA TAHUN AJARAN BARU
+      const payload = {
+        updatedModule: "tahun_ajaran",
+        tahunAjaranBaru: newTA,
+        npsn: "PUSAT",
+        namaSekolah: "ADMIN PUSAT"
+      };
+
+      fetch(GOOGLE_SHEET_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+
+      // Sinkronisasi data sekolah awal di TA baru ke Google Sheets
       db[newTA].forEach(s => {
         syncToGoogleSheet(s, newTA, "identitas");
       });
