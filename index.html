@@ -697,7 +697,13 @@
       }
 
       saveDB();
-      alert("Tahun Ajaran " + newTA + " Berhasil Ditambahkan!");
+
+      // Sinkronisasi data awal TA baru ke Google Sheets untuk setiap sekolah
+      db[newTA].forEach(s => {
+        syncToGoogleSheet(s, newTA, "identitas");
+      });
+
+      alert("Tahun Ajaran " + newTA + " Berhasil Ditambahkan & Disinkronkan ke Cloud!");
       closeAddTaModal();
       renderFilterControls();
       document.getElementById('filterTA').value = newTA;
