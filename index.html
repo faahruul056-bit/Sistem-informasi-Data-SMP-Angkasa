@@ -1554,7 +1554,7 @@ function saveIdentitasData(e, npsn) {
           </div>
           <div class="col-span-2">
             <label class="text-[10px] text-slate-500 block mb-0.5">Target Kelas</label>
-            <select onchange="updateDopLainItem('${npsn}', ${idx}, 'kelas', this.value)" class="w-full p-2 border rounded-xl bg-white">
+            <select onchange="updateDopLainTargetKelas('${npsn}', ${idx}, this.value)" class="w-full p-2 border rounded-xl bg-white">
               <option value="Semua" ${selSemua}>Semua Kelas</option>
               <option value="7" ${sel7}>Kelas VII</option>
               <option value="8" ${sel8}>Kelas VIII</option>
@@ -1574,12 +1574,38 @@ function saveIdentitasData(e, npsn) {
           </div>
           <div class="col-span-2">
             <label class="text-[10px] text-slate-500 block mb-0.5">Jml Siswa</label>
-            <input type="number" value="${item.jumlahSiswa || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'jumlahSiswa', this.value)" class="w-full p-2 border rounded-xl">
+            <input type="number" id="jmlSiswaDop_${npsn}_${idx}" value="${item.jumlahSiswa || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'jumlahSiswa', this.value)" class="w-full p-2 border rounded-xl">
           </div>
           <div class="col-span-1 text-center pt-3">
             <button type="button" onclick="removeDopLainRow('${npsn}', ${idx})" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `;
+      function updateDopLainTargetKelas(npsn, index, targetKelas) {
+      const taList = Object.keys(db).sort().reverse();
+      const ta = document.getElementById('filterTA')?.value || taList[0];
+      const school = db[ta].find(s => s.npsn === npsn);
+      if (school && school.keuangan?.dopLainnyaList[index]) {
+        school.keuangan.dopLainnyaList[index].kelas = targetKelas;
+
+        // Ambil data siswa riil per kelas
+        const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
+        const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
+        const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
+        const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
+
+        // Otomatis set jumlah siswa berdasarkan kelas yang dipilih
+        let targetJmlSiswa = totalSiswaGlobal;
+        if (targetKelas === '7') targetJmlSiswa = actualK7;
+        else if (targetKelas === '8') targetJmlSiswa = actualK8;
+        else if (targetKelas === '9') targetJmlSiswa = actualK9;
+
+        school.keuangan.dopLainnyaList[index].jumlahSiswa = targetJmlSiswa;
+
+        // Update tampilan input jumlah siswa secara langsung di layar
+        const inputJml = document.getElementById(`jmlSiswaDop_${npsn}_${index}`);
+        if (inputJml) inputJml.value = targetJmlSiswa;
+      }
+    }
         container.appendChild(row);
       });
       lucide.createIcons();    }
@@ -1592,15 +1618,18 @@ function saveIdentitasData(e, npsn) {
         if (!school.keuangan) school.keuangan = {};
         if (!school.keuangan.dopLainnyaList) school.keuangan.dopLainnyaList = [];
         
-        // Ambil total siswa riil dari modul Peserta Didik
-        const totalSiswa = (school.siswa.k7L + school.siswa.k7P) + (school.siswa.k8L + school.siswa.k8P) + (school.siswa.k9L + school.siswa.k9P);
-        
+        // Ambil data siswa riil per masing-masing jenjang kelas
+        const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
+        const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
+        const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
+        const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
+
         school.keuangan.dopLainnyaList.push({ 
           keterangan: '', 
           kelas: 'Semua', 
           tipe: 'Bulanan', 
           nominal: 0, 
-          jumlahSiswa: totalSiswa // Mengikuti total siswa, tidak lagi nyangkut di angka 6
+          jumlahSiswa: totalSiswaGlobal // Default awal total, nanti otomatis menyesuaikan saat Target Kelas dipilih
         });
         renderDopLainRows(npsn, school.keuangan.dopLainnyaList);
       }
