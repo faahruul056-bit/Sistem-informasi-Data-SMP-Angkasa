@@ -190,6 +190,9 @@
 
     function syncToGoogleSheet(schoolObj, tahunAjaranStr, moduleName) {
       if (!schoolObj) return;
+      
+      // JANGAN KIRIM DATA PUSAT ATAU ADMIN KE TAB LAPORAN SEKOLAH
+      if (schoolObj.npsn === 'PUSAT' || schoolObj.npsn === '-' || !schoolObj.npsn) return;
 
       const totSiswa = (schoolObj.siswa.k7L + schoolObj.siswa.k7P) + (schoolObj.siswa.k8L + schoolObj.siswa.k8P) + (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
       const totRombel = schoolObj.siswa.r7 + schoolObj.siswa.r8 + schoolObj.siswa.r9;
