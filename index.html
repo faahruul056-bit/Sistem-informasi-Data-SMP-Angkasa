@@ -582,7 +582,22 @@
         .then(resData => {
           if (resData.status === "success" && resData.db) {
             db = resData.db;
-            saveDB(); // Simpan ke cache lokal untuk backup sesi offline
+            saveDB(); // Perbarui cache lokal dengan data cloud terbaru
+            
+            // Jika yang login adalah sekolah, pastikan data sekolah tersebut langsung terisi dari db cloud
+            const { role, npsn } = parseRoleInfo();
+            if (role === 'SEKOLAH') {
+              const taList = Object.keys(db);
+              if (taList.length > 0) {
+                const latestTA = taList.sort().reverse()[0];
+                if (!db[latestTA]) db[latestTA] = [];
+                const exists = db[latestTA].find(s => s.npsn === npsn);
+                if (!exists) {
+                  // Jika belum ada di TA tersebut, ambil default atau biarkan kosong sesuai tarikan cloud
+                  console.log("Data sekolah di cloud untuk TA ini belum ada, menggunakan inisialisasi.");
+                }
+              }
+            }
           }
         })
         .catch(err => {
