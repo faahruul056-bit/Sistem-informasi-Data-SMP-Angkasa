@@ -785,11 +785,6 @@
       const taSelect = document.getElementById('filterTA');
       const ta = taSelect?.value || taList[0] || "";
 
-    function getFilteredData() {
-      const taList = Object.keys(db).sort().reverse();
-      const taSelect = document.getElementById('filterTA');
-      const ta = taSelect?.value || taList[0] || "";
-
       if (!ta || !db[ta]) {
         return [];
       }
