@@ -584,16 +584,23 @@
         return;
       }
 
-      // Ambil cache lokal terlebih dahulu agar halaman langsung tampil tanpa menunggu loading cloud yang lama
+      // Ambil cache lokal terlebih dahulu
       db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
 
-      // Coba tarik data terbaru dari Google Sheets di background
+      // Coba tarik data terbaru & data akun dari Google Sheets di background
       fetch(GOOGLE_SHEET_WEB_APP_URL + "?action=getAllData")
         .then(res => res.json())
         .then(resData => {
-          if (resData && resData.status === "success" && resData.db && Object.keys(resData.db).length > 0) {
-            db = resData.db;
-            localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
+          if (resData && resData.status === "success") {
+            // Sinkronisasi database sekolah
+            if (resData.db && Object.keys(resData.db).length > 0) {
+              db = resData.db;
+              localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
+            }
+            // SINKRONISASI AKUN DARI CLOUD KE LOCALSTORAGE ADMIN
+            if (resData.akun && Array.isArray(resData.akun) && resData.akun.length > 0) {
+              localStorage.setItem('sidsa_users_v10', JSON.stringify(resData.akun));
+            }
           }
         })
         .catch(err => {
@@ -617,7 +624,6 @@
             }
           }
 
-          // Pastikan semua komponen UI dirender secara aman
           renderHeaderControls();
           renderSidebar();
           renderFilterControls();
