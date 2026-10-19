@@ -1617,18 +1617,13 @@ function saveIdentitasData(e, npsn) {
         if (!school.keuangan) school.keuangan = {};
         if (!school.keuangan.dopLainnyaList) school.keuangan.dopLainnyaList = [];
         
-        // Ambil data siswa riil per masing-masing jenjang kelas
-        const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
-        const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
-        const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
-        const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
-
+        // Default awal jumlah siswa diset 0 agar bersih (tidak membawa angka 7)
         school.keuangan.dopLainnyaList.push({ 
           keterangan: '', 
           kelas: 'Semua', 
           tipe: 'Bulanan', 
           nominal: 0, 
-          jumlahSiswa: totalSiswaGlobal // Default awal total, nanti otomatis menyesuaikan saat Target Kelas dipilih
+          jumlahSiswa: 0 
         });
         renderDopLainRows(npsn, school.keuangan.dopLainnyaList);
       }
@@ -1653,20 +1648,88 @@ function saveIdentitasData(e, npsn) {
       }
     }
 
-    function renderDspLainRows(npsn, list) {
-      const container = document.getElementById('dspLainContainer_' + npsn);
+    function updateDopLainTargetKelas(npsn, index, targetKelas) {
+      const taList = Object.keys(db).sort().reverse();
+      const ta = document.getElementById('filterTA')?.value || taList[0];
+      const school = db[ta].find(s => s.npsn === npsn);
+      if (school && school.keuangan?.dopLainnyaList[index]) {
+        school.keuangan.dopLainnyaList[index].kelas = targetKelas;
+
+        // Ambil data siswa riil spesifik per kelas dari modul Peserta Didik
+        const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
+        const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
+        const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
+        const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
+
+        // Tentukan jumlah siswa secara otomatis berdasarkan pilihan target kelas
+        let targetJmlSiswa = totalSiswaGlobal;
+        if (targetKelas === '7') targetJmlSiswa = actualK7;
+        else if (targetKelas === '8') targetJmlSiswa = actualK8;
+        else if (targetKelas === '9') targetJmlSiswa = actualK9;
+
+        school.keuangan.dopLainnyaList[index].jumlahSiswa = targetJmlSiswa;
+
+        // Perbarui tampilan input jumlah siswa secara langsung di layar
+        const inputJml = document.getElementById(`jmlSiswaDop_${npsn}_${index}`);
+        if (inputJml) inputJml.value = targetJmlSiswa;
+      }
+    }
+
+    function renderDopLainRows(npsn, list) {
+      const container = document.getElementById('dopLainContainer_' + npsn);
       if (!container) return;
 
       container.innerHTML = '';
       if (!list || list.length === 0) {
-        container.innerHTML = '<p class="text-[11px] text-slate-400 italic">Belum ada penambahan DSP lainnya. Klik tombol di atas untuk menambah.</p>';
+        container.innerHTML = '<p class="text-[11px] text-slate-400 italic">Belum ada penambahan DOP lainnya. Klik tombol di atas untuk menambah.</p>';
         return;
       }
 
       list.forEach((item, idx) => {
         const row = document.createElement('div');
         row.className = 'grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs';
-        row.innerHTML = '<div class="col-span-5"><label class="text-[10px] text-slate-500 block mb-0.5">Keterangan DSP</label><input type="text" value="' + (item.keterangan || '') + '" onchange="updateDspLainItem(\'' + npsn + '\', ' + idx + ', \'keterangan\', this.value)" class="w-full p-2 border rounded-xl"></div><div class="col-span-4"><label class="text-[10px] text-slate-500 block mb-0.5">Tarif DSP (Rp)</label><input type="number" value="' + (item.nominal || 0) + '" onchange="updateDspLainItem(\'' + npsn + '\', ' + idx + ', \'nominal\', this.value)" class="w-full p-2 border rounded-xl"></div><div class="col-span-2"><label class="text-[10px] text-slate-500 block mb-0.5">Jumlah Siswa</label><input type="number" value="' + (item.jumlahSiswa || 0) + '" onchange="updateDspLainItem(\'' + npsn + '\', ' + idx + ', \'jumlahSiswa\', this.value)" class="w-full p-2 border rounded-xl"></div><div class="col-span-1 text-center pt-3"><button type="button" onclick="removeDspLainRow(\'' + npsn + '\', ' + idx + ')" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>';
+        
+        const selSemua = (item.kelas === 'Semua' || !item.kelas) ? 'selected' : '';
+        const sel7 = item.kelas === '7' ? 'selected' : '';
+        const sel8 = item.kelas === '8' ? 'selected' : '';
+        const sel9 = item.kelas === '9' ? 'selected' : '';
+
+        const selB = (item.tipe === 'Bulanan' || !item.tipe) ? 'selected' : '';
+        const selT = item.tipe === 'Tahunan' ? 'selected' : '';
+
+        row.innerHTML = `
+          <div class="col-span-3">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Keterangan</label>
+            <input type="text" value="${item.keterangan || ''}" placeholder="Cth: Yatim/Dhuafa" onchange="updateDopLainItem('${npsn}', ${idx}, 'keterangan', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Target Kelas</label>
+            <select onchange="updateDopLainTargetKelas('${npsn}', ${idx}, this.value)" class="w-full p-2 border rounded-xl bg-white">
+              <option value="Semua" ${selSemua}>Semua Kelas</option>
+              <option value="7" ${sel7}>Kelas VII</option>
+              <option value="8" ${sel8}>Kelas VIII</option>
+              <option value="9" ${sel9}>Kelas IX</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Tipe</label>
+            <select onchange="updateDopLainItem('${npsn}', ${idx}, 'tipe', this.value)" class="w-full p-2 border rounded-xl bg-white">
+              <option value="Bulanan" ${selB}>Bulanan</option>
+              <option value="Tahunan" ${selT}>Tahunan</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Nominal (Rp)</label>
+            <input type="number" value="${item.nominal || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'nominal', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Jml Siswa</label>
+            <input type="number" id="jmlSiswaDop_${npsn}_${idx}" value="${item.jumlahSiswa || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'jumlahSiswa', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-1 text-center pt-3">
+            <button type="button" onclick="removeDopLainRow('${npsn}', ${idx})" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        `;
         container.appendChild(row);
       });
       lucide.createIcons();
