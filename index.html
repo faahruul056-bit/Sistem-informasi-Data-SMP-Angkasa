@@ -1098,9 +1098,10 @@
           let bodyForm = '';
           const leg = s.legalitas || {};
 
-          const fileSKPend = leg.fileSKPendirian || "";
-          const fileSKIzin = leg.fileSKIzin || "";
-          const fileAkred = leg.fileAkreditasi || "";
+          // Pastikan mengambil string nama file secara aman
+          const fileSKPend = leg.fileSKPendirian || s.fileSKPendirian || "";
+          const fileSKIzin = leg.fileSKIzin || s.fileSKIzin || "";
+          const fileAkred = leg.fileAkreditasi || s.fileAkreditasi || "";
 
           const stAkred = leg.statusAkreditasi || "Belum Diisi";
           const stSKPend = leg.statusSKPendirian || "Belum Diisi";
