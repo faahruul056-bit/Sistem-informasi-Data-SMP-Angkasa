@@ -578,51 +578,60 @@
     }
 
     window.onload = function() {
-      // Tampilkan indikator loading atau pastikan session valid dulu
+      // Validasi sesi terlebih dahulu
       if (!currentSession || !currentSession.role || !currentSession.user) {
         window.location.href = 'login.html';
         return;
       }
 
-      // TARIK 100% MURNI DARI CLOUD GOOGLE SHEETS (TANPA MENGGABUNGKAN LOCAL STORAGE LAMA)
+      // Ambil cache lokal terlebih dahulu agar halaman langsung tampil tanpa menunggu loading cloud yang lama
+      db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
+
+      // Coba tarik data terbaru dari Google Sheets di background
       fetch(GOOGLE_SHEET_WEB_APP_URL + "?action=getAllData")
         .then(res => res.json())
         .then(resData => {
-          if (resData.status === "success" && resData.db) {
-            // Gunakan murni data dari Google Sheets sebagai database utama
+          if (resData && resData.status === "success" && resData.db && Object.keys(resData.db).length > 0) {
             db = resData.db;
             localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
-          } else {
-            // Fallback jika cloud kosong
-            db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
           }
         })
         .catch(err => {
-          console.warn("Gagal mengambil data cloud, menggunakan cache lokal:", err);
-          db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
+          console.warn("Menggunakan cache lokal karena cloud sedang offline:", err);
         })
         .finally(() => {
-          // Validasi khusus akun sekolah agar datanya tidak tertukar dengan sekolah lain
+          // Validasi khusus akun sekolah
           const { role, npsn } = parseRoleInfo();
           if (role === 'SEKOLAH') {
             const taList = Object.keys(db);
-            if (taList.length > 0) {
+            if (taList.length === 0) {
+              db["2026-2027"] = [createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang)];
+            } else {
               taList.forEach(ta => {
                 if (!Array.isArray(db[ta])) db[ta] = [];
                 let foundSchool = db[ta].find(s => s.npsn === npsn);
                 if (!foundSchool) {
-                  // Jika di cloud belum ada untuk NPSN ini, buatkan default khusus sekolah tersebut
                   db[ta].push(createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang));
                 }
               });
             }
           }
 
+          // Pastikan semua komponen UI dirender secara aman
           renderHeaderControls();
           renderSidebar();
           renderFilterControls();
+          
+          const taSelect = document.getElementById('filterTA');
+          if (taSelect && !taSelect.value) {
+            const taKeys = Object.keys(db).sort().reverse();
+            if (taKeys.length > 0) taSelect.value = taKeys[0];
+          }
+
           renderPage('dashboard');
-          lucide.createIcons();
+          if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
         });
     };
 
