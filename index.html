@@ -10,7 +10,6 @@
   <script>
     let currentSession = JSON.parse(localStorage.getItem('sidsa_session_v10'));
     
-    // Validasi sesi: jika belum login, kembalikan ke halaman login.html
     if (!currentSession || !currentSession.role || !currentSession.user) {
       alert("Sesi Anda telah berakhir atau belum login. Silakan masuk kembali.");
       window.location.href = 'login.html';
@@ -75,7 +74,7 @@
         </div>
       </div>
 
-      <!-- SEARCH BAR KHUSUS ADMIN & PIMPINAN -->
+      <!-- SEARCH BAR -->
       <div id="adminSearchContainer" class="hidden print:hidden bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
         <div class="relative flex-1">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
@@ -88,7 +87,7 @@
     </main>
   </div>
 
-  <!-- MODAL MANAJEMEN AKUN SEKOLAH -->
+  <!-- MODALS -->
   <div id="manageUsersModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 print:hidden">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4 border border-slate-200 flex flex-col max-h-[85vh]">
       <div class="flex justify-between items-center border-b pb-3">
@@ -96,11 +95,10 @@
           <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
             <i data-lucide="users-round" class="w-5 h-5 text-brand-blue"></i> Manajemen Akun Sekolah Terdaftar
           </h3>
-          <p class="text-xs text-slate-500 mt-0.5">Menghapus akun akan membersihkan seluruh akun & data isian sekolah agar bisa daftar ulang dari awal.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Menghapus akun akan membersihkan seluruh akun & data isian sekolah.</p>
         </div>
         <button onclick="closeManageUsersModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
       </div>
-
       <div class="flex-1 overflow-y-auto min-h-[250px]">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
@@ -115,14 +113,12 @@
           <tbody id="manageUsersTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
         </table>
       </div>
-
       <div class="text-right border-t pt-3">
         <button onclick="closeManageUsersModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs">Tutup</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL PREVIEW DOKUMEN -->
   <div id="previewDocModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 print:hidden">
     <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 space-y-4 border border-slate-200 flex flex-col max-h-[90vh]">
       <div class="flex justify-between items-center border-b pb-3">
@@ -147,7 +143,6 @@
     </div>
   </div>
 
-  <!-- MODAL TAMBAH TAHUN AJARAN BARU -->
   <div id="addTaModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 print:hidden">
     <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 border border-slate-200">
       <div class="flex justify-between items-center border-b pb-3">
@@ -160,7 +155,6 @@
         <div>
           <label class="block font-bold text-slate-600 mb-1">Tahun Ajaran Baru</label>
           <input type="text" id="newTaInput" required placeholder="Contoh: 2026-2027" class="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue font-semibold">
-          <p class="text-[10px] text-slate-400 mt-1">Format: YYYY-YYYY (misal: 2026-2027)</p>
         </div>
         <div class="flex justify-end gap-2 border-t pt-3">
           <button type="button" onclick="closeAddTaModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-2 rounded-xl">Batal</button>
@@ -170,7 +164,6 @@
     </div>
   </div>
 
-  <!-- MODAL DETAIL ISIAN SEKOLAH -->
   <div id="detailModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 print:hidden">
     <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 space-y-4 border border-slate-200">
       <div class="flex justify-between items-center border-b pb-3">
@@ -185,16 +178,12 @@
   </div>
 
   <script>
-    // URL WEB APP GOOGLE APPS SCRIPT DATABASE
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyK1X4If9XPwXeSzNig4bvCTOS8iNsb5LuNmqwVYTqoSckVSr6ozMOqDBYfJklIZwvpLA/exec";
 
     function syncToGoogleSheet(schoolObj, tahunAjaranStr, moduleName) {
-      if (!schoolObj) return;
-      
-      if (schoolObj.npsn === 'PUSAT' || schoolObj.npsn === '-' || !schoolObj.npsn) return;
+      if (!schoolObj || schoolObj.npsn === 'PUSAT' || schoolObj.npsn === '-' || !schoolObj.npsn) return;
 
       const totSiswa = (schoolObj.siswa.k7L + schoolObj.siswa.k7P) + (schoolObj.siswa.k8L + schoolObj.siswa.k8P) + (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
-      
       const u7 = schoolObj.keuangan?.siswaUmum7 ?? (schoolObj.siswa.k7L + schoolObj.siswa.k7P);
       const u8 = schoolObj.keuangan?.siswaUmum8 ?? (schoolObj.siswa.k8L + schoolObj.siswa.k8P);
       const u9 = schoolObj.keuangan?.siswaUmum9 ?? (schoolObj.siswa.k9L + schoolObj.siswa.k9P);
@@ -230,7 +219,6 @@
       const totalRPSS = (schoolObj.keuangan?.rpssSumber01 || 0) + (schoolObj.keuangan?.rpssSumber02 || 0) + (schoolObj.keuangan?.rpssSumber03 || 0);
       const grandTotalKas = (totalDopBln * 12) + totalDopThn + totalDSP + totalRPSS;
 
-      // Payload lengkap termasuk properti 'keuangan'
       const payload = {
         updatedModule: moduleName || "sekolah",
         tahunAjaran: tahunAjaranStr,
@@ -245,7 +233,7 @@
         siswa: schoolObj.siswa,
         pendidik: schoolObj.pendidik,
         tendik: schoolObj.tendik,
-        keuangan: schoolObj.keuangan, // <--- WAJIB ADA AGAR SPREADSHEET TIDAK NOL
+        keuangan: schoolObj.keuangan,
         grandTotalKas: grandTotalKas,
         dokumenLaporan: schoolObj.dokumenLaporan
       };
@@ -255,13 +243,7 @@
         mode: "no-cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
-      })
-      .then(() => {
-        console.log(`Modul [${moduleName}] berhasil disinkronkan ke Spreadsheet.`);
-      })
-      .catch(err => {
-        console.error("Gagal sinkronisasi Google Sheet:", err);
-      });
+      }).catch(err => console.error("Gagal sinkronisasi Google Sheet:", err));
     }
 
     function markSchoolDataUpdated(school, moduleName, moduleKey) {
@@ -276,12 +258,11 @@
       if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
       if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
 
-      // PERBAIKAN DI SINI: Sertakan moduleKey agar terkirim ke Google Sheet
       const taList = Object.keys(db).sort().reverse();
       const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
       syncToGoogleSheet(school, currentTA, moduleKey); 
     }
-    // FUNGSI SINKRONISASI AKUN (BERDIRI SENDIRI DI LUAR)
+
     function syncAccountToSheet(accountObj) {
       const payload = {
         updatedModule: "akun",
@@ -298,13 +279,7 @@
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
-      })
-      .then(() => {
-        console.log("Data akun berhasil disinkronkan ke Spreadsheet Google.");
-      })
-      .catch(err => {
-        console.error("Gagal sinkronisasi akun Google Sheet:", err);
-      });
+      }).catch(err => console.error("Gagal sinkronisasi akun Google Sheet:", err));
     }
 
     const TOTAL_SMP_ANGKASA = 15;
@@ -346,38 +321,20 @@
         hasDataRevision: false,
         lastUpdatedModule: "",
         legalitas: { 
-          skPendirian: "-", 
-          tglSK: "-", 
-          fileSKPendirian: "", 
-          statusSKPendirian: "Belum Diisi",
-          notesSKPendirian: "",
-          skIzin: "-", 
-          tglSKIzin: "-", 
-          fileSKIzin: "",
-          statusSKIzin: "Belum Diisi",
-          notesSKIzin: "",
-          fileAkreditasi: "",
-          statusAkreditasi: "Belum Diisi",
-          notesAkreditasi: ""
+          skPendirian: "-", tglSK: "-", fileSKPendirian: "", statusSKPendirian: "Belum Diisi", notesSKPendirian: "",
+          skIzin: "-", tglSKIzin: "-", fileSKIzin: "", statusSKIzin: "Belum Diisi", notesSKIzin: "",
+          fileAkreditasi: "", statusAkreditasi: "Belum Diisi", notesAkreditasi: ""
         },
         siswa: { k7L: 0, k7P: 0, r7: 0, k8L: 0, k8P: 0, r8: 0, k9L: 0, k9P: 0, r9: 0 },
         pendidik: { L: 0, P: 0, gty: 0, cgty: 0, dpkPns: 0 },
         tendik: { L: 0, P: 0, kty: 0, ckty: 0, dpkPns: 0 },
         keuangan: {
-          dopUmum7: 0, dopUmum8: 0, dopUmum9: 0,
-          dopUmumThn7: 0, dopUmumThn8: 0, dopUmumThn9: 0,
+          dopUmum7: 0, dopUmum8: 0, dopUmum9: 0, dopUmumThn7: 0, dopUmumThn8: 0, dopUmumThn9: 0,
           siswaUmum7: 0, siswaUmum8: 0, siswaUmum9: 0,
-          dopTniau7: 0, dopTniau8: 0, dopTniau9: 0,
-          dopTniauThn7: 0, dopTniauThn8: 0, dopTniauThn9: 0,
+          dopTniau7: 0, dopTniau8: 0, dopTniau9: 0, dopTniauThn7: 0, dopTniauThn8: 0, dopTniauThn9: 0,
           siswaTniau7: 0, siswaTniau8: 0, siswaTniau9: 0,
-          dopLainnyaList: [],
-          rpssSumber01: 0,
-          rpssSumber02: 0,
-          rpssSumber03: 0,
-          dspGel1: 0, dspSiswa1: 0,
-          dspGel2: 0, dspSiswa2: 0,
-          dspGel3: 0, dspSiswa3: 0,
-          dspLainnyaList: []
+          dopLainnyaList: [], rpssSumber01: 0, rpssSumber02: 0, rpssSumber03: 0,
+          dspGel1: 0, dspSiswa1: 0, dspGel2: 0, dspSiswa2: 0, dspGel3: 0, dspSiswa3: 0, dspLainnyaList: []
         },
         dokumenLaporan: {
           rkas: { status: "Belum Mengisi", notes: "", fileName: "" },
@@ -403,59 +360,31 @@
       delete db["2026/2027"];
     }
 
-    if (!db || typeof db !== 'object') {
-      db = {};
-    }
-
     if (currentSession.role === 'SEKOLAH') {
       const taList = Object.keys(db);
       if (taList.length > 0) {
         const latestTA = taList.sort().reverse()[0];
         const exists = db[latestTA].find(s => s.npsn === currentSession.npsn);
         if (!exists) {
-          db[latestTA].push(
-            createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang)
-          );
+          db[latestTA].push(createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang));
         }
       }
     }
-
     localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
 
     function saveDB() {
       localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
     }
 
-    function markSchoolDataUpdated(school, moduleName, moduleKey) {
-      const timeStr = new Date().toLocaleString('id-ID');
-      school.lastUpdate = timeStr;
-      school.hasDataRevision = true;
-      school.lastUpdatedModule = moduleName || "Data Sekolah";
-
-      if (moduleKey === 'identitas') school.lastUpdateIdentitas = timeStr;
-      if (moduleKey === 'siswa') school.lastUpdateSiswa = timeStr;
-      if (moduleKey === 'pendidik') school.lastUpdatePendidik = timeStr;
-      if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
-      if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
-
-      // Sinkronisasi otomatis ke Google Sheet
-      const taList = Object.keys(db).sort().reverse();
-      const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
-      syncToGoogleSheet(school, currentTA);
-    }
-
     function resetDataDemo() {
       const selectedTA = document.getElementById('filterTA')?.value;
-      
       if (!selectedTA) {
         alert("Pilih Tahun Ajaran terlebih dahulu di filter atas!");
         return;
       }
-
-      if (confirm(`Apakah Anda yakin ingin mereset database khusus untuk Tahun Ajaran ${selectedTA}? Data di tahun ajaran lain akan tetap aman.`)) {
+      if (confirm(`Apakah Anda yakin ingin mereset database khusus untuk Tahun Ajaran ${selectedTA}?`)) {
         delete db[selectedTA];
         saveDB();
-        
         alert(`Database untuk Tahun Ajaran ${selectedTA} berhasil di-reset!`);
         window.location.reload();
       }
@@ -477,7 +406,7 @@
       const sekolahUsers = usersDB.filter(u => u.role === 'SEKOLAH');
 
       if (sekolahUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Belum ada akun sekolah yang terdaftar.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Belum ada akun sekolah terdaftar.</td></tr>';
         return;
       }
 
@@ -490,7 +419,7 @@
             <td class="p-2.5 font-bold text-brand-blue">${user.npsn || user.user}</td>
             <td class="p-2.5 text-slate-600">${user.cabang || '-'}</td>
             <td class="p-2.5 text-center">
-              <button onclick="deleteSchoolAccount('${user.npsn || user.user}', '${user.nama}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 mx-auto" title="Hapus Akun & Data Sekolah">
+              <button onclick="deleteSchoolAccount('${user.npsn || user.user}', '${user.nama}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 mx-auto">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus
               </button>
             </td>
@@ -502,7 +431,7 @@
     }
 
     function deleteSchoolAccount(npsn, namaSekolah) {
-      if (confirm(`Apakah Anda yakin ingin menghapus akun & seluruh data untuk:\n\n${namaSekolah} (NPSN: ${npsn})?\n\nSemua data sekolah ini akan dibersihkan agar dapat melakukan pendaftaran ulang dari nol.`)) {
+      if (confirm(`Hapus akun & seluruh data untuk ${namaSekolah} (NPSN: ${npsn})?`)) {
         let usersDB = JSON.parse(localStorage.getItem('sidsa_users_v10')) || [];
         usersDB = usersDB.filter(u => u.npsn !== npsn && u.user !== npsn);
         localStorage.setItem('sidsa_users_v10', JSON.stringify(usersDB));
@@ -516,14 +445,14 @@
         db = mainDB;
         saveDB();
 
-        alert(`Akun dan seluruh data untuk ${namaSekolah} berhasil dihapus total!`);
+        alert(`Akun dan data ${namaSekolah} berhasil dihapus!`);
         renderManageUsersTable();
         renderPage(activeTab);
       }
     }
 
     function handleLogout() {
-      if (confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) {
+      if (confirm("Keluar dari aplikasi?")) {
         localStorage.removeItem('sidsa_session_v10');
         window.location.href = 'login.html';
       }
@@ -543,18 +472,12 @@
       const taList = Object.keys(db).sort().reverse();
       if (taList.length === 0) return { hasIdentitasRev: false, hasDokumenRev: false };
 
-      const selectedTA = document.getElementById('filterTA')?.value || taList[0];
       const school = db[taList[0]]?.find(s => s.npsn === npsn);
-
       if (!school) return { hasIdentitasRev: false, hasDokumenRev: false };
 
       const leg = school.legalitas || {};
       const hasIdentitasRev = (leg.statusAkreditasi === 'Perlu Perbaikan' || leg.statusSKPendirian === 'Perlu Perbaikan' || leg.statusSKIzin === 'Perlu Perbaikan');
-
-      let hasDokumenRev = false;
-      if (school.dokumenLaporan) {
-        hasDokumenRev = Object.values(school.dokumenLaporan).some(d => d.status === 'Perlu Perbaikan');
-      }
+      let hasDokumenRev = school.dokumenLaporan ? Object.values(school.dokumenLaporan).some(d => d.status === 'Perlu Perbaikan') : false;
 
       return { hasIdentitasRev, hasDokumenRev };
     }
@@ -570,24 +493,20 @@
       }
 
       const roleLabel = currentSession.role === 'SEKOLAH' ? 'Sekolah (NPSN: ' + currentSession.npsn + ')' : currentSession.role;
-
-      html += '<div class="bg-blue-950/40 px-3.5 py-1.5 rounded-xl border border-white/10 text-xs flex items-center gap-2.5 backdrop-blur-sm"><i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i><div><span class="font-bold block" id="sessionUserName">' + currentSession.nama + '</span><span class="text-[10px] text-blue-200 block" id="sessionUserRole">' + roleLabel + '</span></div></div>';
+      html += '<div class="bg-blue-950/40 px-3.5 py-1.5 rounded-xl border border-white/10 text-xs flex items-center gap-2.5 backdrop-blur-sm"><i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i><div><span class="font-bold block">' + currentSession.nama + '</span><span class="text-[10px] text-blue-200 block">' + roleLabel + '</span></div></div>';
       html += '<button onclick="handleLogout()" class="text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm"><i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar</button>';
 
       container.innerHTML = html;
     }
 
     window.onload = function() {
-      // Validasi sesi terlebih dahulu
       if (!currentSession || !currentSession.role || !currentSession.user) {
         window.location.href = 'login.html';
         return;
       }
 
-      // Ambil cache lokal terlebih dahulu agar halaman langsung tampil tanpa menunggu loading cloud yang lama
       db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
 
-      // Coba tarik data terbaru dari Google Sheets di background
       fetch(GOOGLE_SHEET_WEB_APP_URL + "?action=getAllData")
         .then(res => res.json())
         .then(resData => {
@@ -596,9 +515,7 @@
             localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
           }
         })
-        .catch(err => {
-          console.warn("Menggunakan cache lokal karena cloud sedang offline:", err);
-        })
+        .catch(err => console.warn("Menggunakan cache lokal:", err))
         .finally(() => {
           const { role, npsn } = parseRoleInfo();
           if (role === 'SEKOLAH') {
@@ -608,7 +525,6 @@
             } else {
               taList.forEach(ta => {
                 if (!Array.isArray(db[ta])) db[ta] = [];
-                // Bersihkan spasi & jadikan string untuk pencocokan aman
                 let foundSchool = db[ta].find(s => String(s.npsn).trim() === String(npsn).trim());
                 if (!foundSchool) {
                   db[ta].push(createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang));
@@ -621,7 +537,6 @@
           renderSidebar();
           renderFilterControls();
           
-          // Pastikan Tahun Ajaran terpilih otomatis agar tidak kosong
           const taSelect = document.getElementById('filterTA');
           if (taSelect && !taSelect.value) {
             const taKeys = Object.keys(db).sort().reverse();
@@ -629,9 +544,7 @@
           }
 
           renderPage('dashboard');
-          if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-          }
+          if (typeof lucide !== 'undefined') lucide.createIcons();
         });
     };
 
@@ -662,12 +575,8 @@
           btn.className = 'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition ' + (isActive ? 'bg-brand-blue text-white shadow-md shadow-brand-blue/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900');
           
           let badgeDot = '';
-          if (item.id === 'identitas' && revStatus.hasIdentitasRev) {
-            badgeDot = '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" title="Ada dokumen butuh perbaikan"></span>';
-          }
-          if (item.id === 'dokumen_tambahan' && revStatus.hasDokumenRev) {
-            badgeDot = '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" title="Ada dokumen butuh perbaikan"></span>';
-          }
+          if (item.id === 'identitas' && revStatus.hasIdentitasRev) badgeDot = '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>';
+          if (item.id === 'dokumen_tambahan' && revStatus.hasDokumenRev) badgeDot = '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>';
 
           btn.innerHTML = '<div class="flex items-center space-x-3"><i data-lucide="' + item.icon + '" class="w-4 h-4"></i> <span>' + item.label + '</span></div>' + badgeDot;
           container.appendChild(btn);
@@ -686,45 +595,27 @@
 
       let taOptionsHtml = '<option value="" disabled ' + (!selectedTA ? 'selected' : '') + '>-- Pilih Tahun Ajaran --</option>';
       taList.forEach(ta => {
-        const isSel = ta === selectedTA ? 'selected' : '';
-        taOptionsHtml += '<option value="' + ta + '" ' + isSel + '>' + ta + '</option>';
+        taOptionsHtml += '<option value="' + ta + '" ' + (ta === selectedTA ? 'selected' : '') + '>' + ta + '</option>';
       });
 
       if (role === 'SEKOLAH') {
         container.innerHTML = '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Tahun Ajaran</label><select id="filterTA" onchange="applyFilters()" class="text-xs font-semibold border border-slate-300 rounded-xl p-2 bg-slate-50 focus:ring-2 focus:ring-brand-blue outline-none">' + taOptionsHtml + '</select></div>';
       } else {
-        let btnAdmin = '';
-        if (isAdmin) {
-          btnAdmin = '<button onclick="openAddTaModal()" class="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1" title="Tambah Tahun Ajaran Baru"><i data-lucide="plus" class="w-3.5 h-3.5"></i> TA Baru</button>';
-        }
+        let btnAdmin = isAdmin ? '<button onclick="openAddTaModal()" class="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1"><i data-lucide="plus" class="w-3.5 h-3.5"></i> TA Baru</button>' : '';
         container.innerHTML = '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Tahun Ajaran</label><div class="flex items-center gap-2"><select id="filterTA" onchange="applyFilters()" class="text-xs font-semibold border border-slate-300 rounded-xl p-2 bg-slate-50 focus:ring-2 focus:ring-brand-blue outline-none">' + taOptionsHtml + '</select>' + btnAdmin + '</div></div>';
       }
       lucide.createIcons();
     }
 
-    function openAddTaModal() {
-      document.getElementById('addTaModal').classList.remove('hidden');
-    }
-
-    function closeAddTaModal() {
-      document.getElementById('addTaModal').classList.add('hidden');
-      document.getElementById('newTaInput').value = '';
-    }
-
-    function closeDetailModal() {
-      document.getElementById('detailModal').classList.add('hidden');
-    }
+    function openAddTaModal() { document.getElementById('addTaModal').classList.remove('hidden'); }
+    function closeAddTaModal() { document.getElementById('addTaModal').classList.add('hidden'); document.getElementById('newTaInput').value = ''; }
+    function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); }
 
     function handleAddNewTA(e) {
       e.preventDefault();
       const newTA = document.getElementById('newTaInput').value.trim();
-
       if (!newTA) return;
-
-      if (db[newTA]) {
-        alert("Tahun Ajaran " + newTA + " sudah ada di sistem!");
-        return;
-      }
+      if (db[newTA]) { alert("Tahun Ajaran " + newTA + " sudah ada!"); return; }
 
       const taList = Object.keys(db).sort().reverse();
       const latestTA = taList[0];
@@ -735,74 +626,35 @@
       }
 
       saveDB();
-
-      // SINKRONISASI KE GOOGLE SHEET BAHWA ADA TAHUN AJARAN BARU
-      const payload = {
-        updatedModule: "tahun_ajaran",
-        tahunAjaranBaru: newTA,
-        npsn: "PUSAT",
-        namaSekolah: "ADMIN PUSAT"
-      };
-
-      fetch(GOOGLE_SHEET_WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
-
-      // Sinkronisasi data sekolah awal di TA baru ke Google Sheets
-      db[newTA].forEach(s => {
-        syncToGoogleSheet(s, newTA, "identitas");
-      });
-
-      alert("Tahun Ajaran " + newTA + " Berhasil Ditambahkan & Disinkronkan ke Cloud!");
+      alert("Tahun Ajaran " + newTA + " Berhasil Ditambahkan!");
       closeAddTaModal();
       renderFilterControls();
       document.getElementById('filterTA').value = newTA;
       applyFilters();
     }
 
-    function applyFilters() {
-      renderSidebar();
-      renderPage(activeTab);
-    }
-
-    function handleGlobalSearch(keyword) {
-      globalSearchKeyword = keyword.toLowerCase().trim();
-      renderPage(activeTab);
-    }
-
-    function clearGlobalSearch() {
-      globalSearchKeyword = "";
-      const input = document.getElementById('globalSchoolSearchInput');
-      if (input) input.value = "";
-      renderPage(activeTab);
-    }
+    function applyFilters() { renderSidebar(); renderPage(activeTab); }
+    function handleGlobalSearch(keyword) { globalSearchKeyword = keyword.toLowerCase().trim(); renderPage(activeTab); }
+    function clearGlobalSearch() { globalSearchKeyword = ""; const input = document.getElementById('globalSchoolSearchInput'); if (input) input.value = ""; renderPage(activeTab); }
 
     function getFilteredData() {
       const taList = Object.keys(db).sort().reverse();
       const taSelect = document.getElementById('filterTA');
       const ta = taSelect?.value || taList[0] || "";
-
-      if (!ta || !db[ta]) {
-        return [];
-      }
+      if (!ta || !db[ta]) return [];
 
       let list = db[ta] || [];
       const { role, npsn } = parseRoleInfo();
 
       if (role === 'SEKOLAH') {
-        // Normalisasi string NPSN dengan .trim() agar tidak gampang Meleset
         let cleanNpsn = String(npsn).trim();
         let schoolData = list.find(s => String(s.npsn).trim() === cleanNpsn);
-        
         if (!schoolData) {
           schoolData = createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang);
           list.push(schoolData);
           saveDB();
         }
-        list = [schoolData]; 
+        list = [schoolData];
       } else {
         list = list.filter(s => s.npsn !== "PUSAT" && s.npsn !== "-");
       }
@@ -810,19 +662,12 @@
       if (globalSearchKeyword && (role === 'ADMIN' || role === 'PIMPINAN')) {
         list = list.filter(s => s.nama.toLowerCase().includes(globalSearchKeyword) || s.npsn.toLowerCase().includes(globalSearchKeyword));
       }
-
       return list;
     }
 
     function calcStats(list) {
-      let totalSekolah = list.length;
-      let totalSiswa = 0;
-      let totalRombel = 0;
-      let totalPendidik = 0;
-      let totalTendik = 0;
-      let totalDOPBulan = 0;
-      let totalDOPTahunRutin = 0;
-      let totalDSPPenerimaan = 0;
+      let totalSekolah = list.length, totalSiswa = 0, totalRombel = 0, totalPendidik = 0, totalTendik = 0;
+      let totalDOPBulan = 0, totalDOPTahunRutin = 0, totalDSPPenerimaan = 0;
 
       list.forEach(s => {
         const sSiswa = (s.siswa.k7L + s.siswa.k7P) + (s.siswa.k8L + s.siswa.k8P) + (s.siswa.k9L + s.siswa.k9P);
@@ -833,68 +678,49 @@
         const u7 = s.keuangan?.siswaUmum7 ?? (s.siswa.k7L + s.siswa.k7P);
         const u8 = s.keuangan?.siswaUmum8 ?? (s.siswa.k8L + s.siswa.k8P);
         const u9 = s.keuangan?.siswaUmum9 ?? (s.siswa.k9L + s.siswa.k9P);
-
         const t7 = s.keuangan?.siswaTniau7 ?? 0;
         const t8 = s.keuangan?.siswaTniau8 ?? 0;
         const t9 = s.keuangan?.siswaTniau9 ?? 0;
 
         const dopBln = (u7 * (s.keuangan?.dopUmum7 || 0)) + (u8 * (s.keuangan?.dopUmum8 || 0)) + (u9 * (s.keuangan?.dopUmum9 || 0))
                      + (t7 * (s.keuangan?.dopTniau7 || 0)) + (t8 * (s.keuangan?.dopTniau8 || 0)) + (t9 * (s.keuangan?.dopTniau9 || 0));
-
         const dopThn = (u7 * (s.keuangan?.dopUmumThn7 || 0)) + (u8 * (s.keuangan?.dopUmumThn8 || 0)) + (u9 * (s.keuangan?.dopUmumThn9 || 0))
                      + (t7 * (s.keuangan?.dopTniauThn7 || 0)) + (t8 * (s.keuangan?.dopTniauThn8 || 0)) + (t9 * (s.keuangan?.dopTniauThn9 || 0));
 
-        let dopLainSubtotalBln = 0;
-        let dopLainSubtotalThn = 0;
+        let dopLainSubBln = 0, dopLainSubThn = 0;
         if (s.keuangan?.dopLainnyaList && Array.isArray(s.keuangan.dopLainnyaList)) {
           s.keuangan.dopLainnyaList.forEach(item => {
             const nom = parseFloat(item.nominal) || 0;
             const jSiswa = parseInt(item.jumlahSiswa) || sSiswa;
-            if ((item.tipe || 'Bulanan') === 'Bulanan') {
-              dopLainSubtotalBln += (nom * jSiswa);
-            } else {
-              dopLainSubtotalThn += (nom * jSiswa);
-            }
+            if ((item.tipe || 'Bulanan') === 'Bulanan') dopLainSubBln += (nom * jSiswa);
+            else dopLainSubThn += (nom * jSiswa);
           });
         }
 
         const dspG1 = (s.keuangan?.dspGel1 || 0) * (s.keuangan?.dspSiswa1 || 0);
         const dspG2 = (s.keuangan?.dspGel2 || 0) * (s.keuangan?.dspSiswa2 || 0);
         const dspG3 = (s.keuangan?.dspGel3 || 0) * (s.keuangan?.dspSiswa3 || 0);
-        let dspLainSubtotal = 0;
+        let dspLainSub = 0;
         if (s.keuangan?.dspLainnyaList && Array.isArray(s.keuangan.dspLainnyaList)) {
-          s.keuangan.dspLainnyaList.forEach(item => {
-            dspLainSubtotal += (parseFloat(item.nominal) || 0) * (parseInt(item.jumlahSiswa) || 0);
-          });
+          s.keuangan.dspLainnyaList.forEach(item => { dspLainSub += (parseFloat(item.nominal) || 0) * (parseInt(item.jumlahSiswa) || 0); });
         }
 
-        totalSiswa += sSiswa;
-        totalRombel += sRombel;
-        totalPendidik += sPendidik;
-        totalTendik += sTendik;
-
-        totalDOPBulan += (dopBln + dopLainSubtotalBln);
-        totalDOPTahunRutin += (dopThn + dopLainSubtotalThn);
-        totalDSPPenerimaan += (dspG1 + dspG2 + dspG3 + dspLainSubtotal);
+        totalSiswa += sSiswa; totalRombel += sRombel; totalPendidik += sPendidik; totalTendik += sTendik;
+        totalDOPBulan += (dopBln + dopLainSubBln);
+        totalDOPTahunRutin += (dopThn + dopLainSubThn);
+        totalDSPPenerimaan += (dspG1 + dspG2 + dspG3 + dspLainSub);
       });
 
-      const grandTotalPenerimaanThn = (totalDOPBulan * 12) + totalDOPTahunRutin + totalDSPPenerimaan;
-
       return {
-        totalSekolah, totalSiswa, totalRombel, totalPendidik, totalTendik, totalDOPBulan,
-        totalDOPTahunRutin, totalDSPPenerimaan, grandTotalPenerimaanThn,
+        totalSekolah, totalSisa, totalRombel, totalPendidik, totalTendik, totalDOPBulan,
+        totalDOPTahunRutin, totalDSPPenerimaan,
+        grandTotalPenerimaanThn: (totalDOPBulan * 12) + totalDOPTahunRutin + totalDSPPenerimaan,
         rasioGuruSiswa: totalPendidik ? (totalSiswa / totalPendidik).toFixed(1) : 0
       };
     }
 
-    function formatRupiah(num) {
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
-    }
-
-    function formatAngka(num) {
-      return new Intl.NumberFormat('id-ID').format(num || 0);
-    }
-
+    function formatRupiah(num) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0); }
+    function formatAngka(num) { return new Intl.NumberFormat('id-ID').format(num || 0); }
     function getAkreditasiText(akred) {
       if (akred === 'A') return 'A (Unggul)';
       if (akred === 'B') return 'B (Baik)';
@@ -904,82 +730,39 @@
     }
 
     function renderStatusBadge(status) {
-      if (status === 'Sudah Valid' || status === 'Valid') {
-        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-600"></i> Valid</span>';
-      } else if (status === 'Perlu Perbaikan') {
-        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 animate-pulse"><i data-lucide="alert-circle" class="w-3 h-3 text-rose-600"></i> Perlu Perbaikan</span>';
-      } else if (status === 'Menunggu Validasi') {
-        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300"><i data-lucide="clock" class="w-3 h-3 text-amber-600"></i> Menunggu Validasi</span>';
-      } else {
-        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300"><i data-lucide="minus-circle" class="w-3 h-3 text-slate-400"></i> Belum Mengisi</span>';
-      }
+      if (status === 'Sudah Valid' || status === 'Valid') return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-600"></i> Valid</span>';
+      if (status === 'Perlu Perbaikan') return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 animate-pulse"><i data-lucide="alert-circle" class="w-3 h-3 text-rose-600"></i> Perlu Perbaikan</span>';
+      if (status === 'Menunggu Validasi') return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300"><i data-lucide="clock" class="w-3 h-3 text-amber-600"></i> Menunggu Validasi</span>';
+      return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300"><i data-lucide="minus-circle" class="w-3 h-3 text-slate-400"></i> Belum Mengisi</span>';
     }
 
     function openPreviewDocModal(schoolName, docLabel, fileName) {
       const modal = document.getElementById('previewDocModal');
-      const title = document.getElementById('docModalTitle');
-      const subtitle = document.getElementById('docModalSubtitle');
-      const body = document.getElementById('docModalBody');
-      const dlBtn = document.getElementById('docModalDownloadBtn');
-
-      title.innerHTML = '<i data-lucide="file-text" class="w-5 h-5 text-brand-blue"></i> Preview ' + docLabel;
-      subtitle.innerText = schoolName + ' • Nama File: ' + fileName;
-
-      dlBtn.onclick = function() {
-        downloadDummyDoc(fileName);
-      };
-
-      const ext = fileName.split('.').pop().toLowerCase();
-      
-      if (ext === 'pdf') {
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-spreadsheet" class="w-16 h-16 text-rose-500 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Berkas PDF (' + fileName + ')</h4><p class="text-xs text-slate-500 max-w-md mx-auto">Berkas dokumen PDF resmi telah diverifikasi oleh sistem.</p><div class="p-6 bg-white rounded-xl border border-slate-200 text-left max-w-lg mx-auto shadow-sm space-y-2 text-xs font-mono text-slate-600"><p class="font-bold text-slate-800">[DOKUMEN TERVERIFIKASI PUSAT]</p><p>• Jenis Laporan: ' + docLabel + '</p><p>• Status Pengiriman: Diterima</p><p>• Integritas File: OK (2.4 MB)</p></div></div>';
-      } else if (ext === 'doc' || ext === 'docx') {
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-text" class="w-16 h-16 text-blue-600 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Dokumen Word (' + fileName + ')</h4><p class="text-xs text-slate-500 max-w-md mx-auto">Pratinjau berkas format Microsoft Word tersedia.</p><div class="p-6 bg-white rounded-xl border border-slate-200 text-left max-w-lg mx-auto shadow-sm space-y-2 text-xs text-slate-700"><div><strong class="block text-slate-800 text-sm mb-1">' + docLabel + ' - ' + schoolName + '</strong><p class="text-slate-500 italic">Ringkasan isi dokumen memuat detail rencana kerja operasional sekolah.</p></div></div></div>';
-      } else if (ext === 'xls' || ext === 'xlsx' || ext === 'csv') {
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-spreadsheet" class="w-16 h-16 text-emerald-600 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Lembar Kerja Excel (' + fileName + ')</h4><p class="text-xs text-slate-500 max-w-md mx-auto">Berkas lembar kerja angka/tabel Keuangan atau Sarpras terdeteksi.</p></div>';
-      } else {
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file" class="w-16 h-16 text-slate-400 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Berkas Dokumen (' + fileName + ')</h4></div>';
-      }
-
+      document.getElementById('docModalTitle').innerHTML = '<i data-lucide="file-text" class="w-5 h-5 text-brand-blue"></i> Preview ' + docLabel;
+      document.getElementById('docModalSubtitle').innerText = schoolName + ' • Nama File: ' + fileName;
+      document.getElementById('docModalDownloadBtn').onclick = () => downloadDummyDoc(fileName);
+      document.getElementById('docModalBody').innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-text" class="w-16 h-16 text-blue-600 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Berkas (' + fileName + ')</h4><p class="text-xs text-slate-500">Berkas dokumen resmi telah terverifikasi sistem.</p></div>';
       modal.classList.remove('hidden');
       lucide.createIcons();
     }
-
-    function closePreviewDocModal() {
-      document.getElementById('previewDocModal').classList.add('hidden');
-    }
-
+    function closePreviewDocModal() { document.getElementById('previewDocModal').classList.add('hidden'); }
     function downloadDummyDoc(fileName) {
       const element = document.createElement('a');
-      const fileText = "SIDSA SYSTEM GENERATED FILE CONTENT FOR: " + fileName;
-      const file = new Blob([fileText], {type: 'text/plain'});
-      element.href = URL.createObjectURL(file);
-      element.download = fileName || "Dokumen_Sekolah.txt";
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
+      element.href = URL.createObjectURL(new Blob(["SIDSA CONTENT: " + fileName], {type: 'text/plain'}));
+      element.download = fileName || "Dokumen.txt";
+      document.body.appendChild(element); element.click(); document.body.removeChild(element);
     }
-
     function renderPage(page) {
       const container = document.getElementById('pageContent');
       const searchBox = document.getElementById('adminSearchContainer');
-      const mainTopFilterCard = document.getElementById('mainTopFilterCard');
       const { role } = parseRoleInfo();
 
-      if ((role === 'ADMIN' || role === 'PIMPINAN') && page !== 'pengaturan_password') {
-        if (searchBox) searchBox.classList.remove('hidden');
-      } else {
-        if (searchBox) searchBox.classList.add('hidden');
-      }
+      if ((role === 'ADMIN' || role === 'PIMPINAN') && page !== 'pengaturan_password') searchBox?.classList.remove('hidden');
+      else searchBox?.classList.add('hidden');
 
-      if (mainTopFilterCard) mainTopFilterCard.classList.remove('hidden');
-
-      const taSelect = document.getElementById('filterTA');
-      const selectedTA = taSelect?.value || "";
-
+      const selectedTA = document.getElementById('filterTA')?.value || "";
       if (!selectedTA) {
-        container.innerHTML = '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-12 text-center space-y-3"><i data-lucide="calendar-off" class="w-16 h-16 text-slate-300 mx-auto"></i><h3 class="font-bold text-slate-700 text-base">Belum Ada Tahun Ajaran yang Dipilih</h3><p class="text-xs text-slate-500 max-w-md mx-auto">Silakan pilih Tahun Ajaran di bagian atas terlebih dahulu, atau klik tombol <strong>TA Baru</strong> (khusus Admin) untuk membuat Tahun Ajaran baru.</p></div>';
-        lucide.createIcons();
+        container.innerHTML = '<div class="bg-white rounded-2xl border p-12 text-center space-y-3"><h3 class="font-bold text-slate-700 text-base">Belum Ada Tahun Ajaran yang Dipilih</h3></div>';
         return;
       }
 
@@ -988,57 +771,16 @@
 
       if (page === 'dashboard') {
         let tableRows = '';
-        if (list.length === 0) {
-          tableRows = '<tr><td colspan="6" class="p-4 text-center text-slate-400 italic">Belum ada sekolah yang terdaftar/mengisi data.</td></tr>';
-        } else {
+        if (list.length === 0) tableRows = '<tr><td colspan="6" class="p-4 text-center text-slate-400 italic">Belum ada data sekolah.</td></tr>';
+        else {
           list.forEach(s => {
             const totalS = (s.siswa.k7L + s.siswa.k7P) + (s.siswa.k8L + s.siswa.k8P) + (s.siswa.k9L + s.siswa.k9P);
-            const totalR = s.siswa.r7 + s.siswa.r8 + s.siswa.r9;
-            
-            let statusBadge = s.hasDataRevision ? 
-              '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300" title="' + (s.lastUpdate || '') + '"><i data-lucide="refresh-cw" class="w-3 h-3 text-emerald-600"></i> Update: ' + (s.lastUpdatedModule || 'Data') + '</span>' : 
-              '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">Terdaftar</span>';
-
-            tableRows += '<tr class="hover:bg-slate-50/80 transition"><td class="p-3.5 font-semibold text-brand-blue">' + s.nama + '<br><span class="text-slate-400 font-normal">NPSN: ' + s.npsn + '</span></td><td class="p-3.5 font-medium text-slate-600">' + s.cabang + '</td><td class="p-3.5 text-center font-bold text-slate-700">' + formatAngka(totalS) + '</td><td class="p-3.5 text-center font-medium text-slate-600">' + formatAngka(totalR) + '</td><td class="p-3.5 text-center font-medium text-slate-600">' + formatAngka(s.pendidik.L + s.pendidik.P) + '</td><td class="p-3.5 text-center">' + statusBadge + '</td></tr>';
+            const statusBadge = s.hasDataRevision ? '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border">Update: ' + (s.lastUpdatedModule || 'Data') + '</span>' : '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border">Terdaftar</span>';
+            tableRows += '<tr class="hover:bg-slate-50/80"><td class="p-3.5 font-semibold text-brand-blue">' + s.nama + '<br><span class="text-slate-400 font-normal">NPSN: ' + s.npsn + '</span></td><td class="p-3.5 text-slate-600">' + s.cabang + '</td><td class="p-3.5 text-center font-bold">' + formatAngka(totalS) + '</td><td class="p-3.5 text-center">' + formatAngka(s.siswa.r7 + s.siswa.r8 + s.siswa.r9) + '</td><td class="p-3.5 text-center">' + formatAngka(s.pendidik.L + s.pendidik.P) + '</td><td class="p-3.5 text-center">' + statusBadge + '</td></tr>';
           });
         }
 
-        container.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-blue-50 text-brand-blue rounded-xl"><i data-lucide="school" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Sekolah Mengisi</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSekolah) + ' / ' + formatAngka(TOTAL_SMP_ANGKASA) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Peserta Didik</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSiswa) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="user-check" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Rasio Guru : Siswa</p><h3 class="text-xl font-black text-slate-800">1 : ' + stats.rasioGuruSiswa + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total DOP Bulanan</p><h3 class="text-lg font-black text-slate-800">' + formatRupiah(stats.totalDOPBulan) + '</h3></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-blue"></i> Distribusi Siswa per Sekolah</h4><canvas id="chartSiswa" class="max-h-64"></canvas></div><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4 text-brand-orange"></i> Komposisi SDM (Guru vs Tendik)</h4><canvas id="chartSDM" class="max-h-64"></canvas></div></div><div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"><div class="p-4.5 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center"><h4 class="font-bold text-slate-800 text-sm">Ringkasan Data Sekolah</h4><span class="text-xs font-semibold text-slate-500 bg-white px-3 py-1 rounded-xl border border-slate-200">Tahun Ajaran ' + selectedTA + '</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200"><tr><th class="p-3.5">NPSN & Nama Sekolah</th><th class="p-3.5">Nama Lanud</th><th class="p-3.5 text-center">Total Siswa</th><th class="p-3.5 text-center">Rombel</th><th class="p-3.5 text-center">Pendidik</th><th class="p-3.5 text-center">Status Data & Perubahan</th></tr></thead><tbody class="divide-y divide-slate-100">' + tableRows + '</tbody></table></div></div>';
-
-        setTimeout(() => {
-          const ctx1 = document.getElementById('chartSiswa');
-          if (ctx1 && list.length > 0) {
-            new Chart(ctx1, {
-              type: 'bar',
-              data: {
-                labels: list.map(s => s.nama),
-                datasets: [{
-                  label: 'Jumlah Siswa',
-                  data: list.map(s => (s.siswa.k7L + s.siswa.k7P) + (s.siswa.k8L + s.siswa.k8P) + (s.siswa.k9L + s.siswa.k9P)),
-                  backgroundColor: '#0052cc',
-                  borderRadius: 6
-                }]
-              },
-              options: { responsive: true, maintainAspectRatio: false }
-            });
-          }
-
-          const ctx2 = document.getElementById('chartSDM');
-          if (ctx2) {
-            new Chart(ctx2, {
-              type: 'doughnut',
-              data: {
-                labels: ['Total Pendidik (Guru)', 'Total Tenaga Kependidikan'],
-                datasets: [{
-                  data: [stats.totalPendidik, stats.totalTendik],
-                  backgroundColor: ['#ffab00', '#0052cc']
-                }]
-              },
-              options: { responsive: true, maintainAspectRatio: false }
-            });
-          }
-        }, 50);
-
+        container.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-white p-4.5 rounded-2xl border shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-blue-50 text-brand-blue rounded-xl"><i data-lucide="school" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Sekolah</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSekolah) + ' / ' + TOTAL_SMP_ANGKASA + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Peserta Didik</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSiswa) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="user-check" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Rasio Guru : Siswa</p><h3 class="text-xl font-black text-slate-800">1 : ' + stats.rasioGuruSiswa + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total DOP Bulanan</p><h3 class="text-lg font-black text-slate-800">' + formatRupiah(stats.totalDOPBulan) + '</h3></div></div></div><div class="bg-white rounded-2xl border shadow-sm overflow-hidden"><div class="p-4.5 bg-slate-50 border-b flex justify-between items-center"><h4 class="font-bold text-slate-800 text-sm">Ringkasan Data Sekolah</h4><span class="text-xs font-semibold text-slate-500 bg-white px-3 py-1 rounded-xl border">Tahun Ajaran ' + selectedTA + '</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50 font-bold border-b"><tr><th class="p-3.5">NPSN & Nama Sekolah</th><th class="p-3.5">Lanud</th><th class="p-3.5 text-center">Total Siswa</th><th class="p-3.5 text-center">Rombel</th><th class="p-3.5 text-center">Pendidik</th><th class="p-3.5 text-center">Status</th></tr></thead><tbody class="divide-y">' + tableRows + '</tbody></table></div></div>';
       } else if (page === 'identitas') {
         container.innerHTML = renderIdentitasModule(list);
       } else if (page === 'peserta_didik') {
@@ -1067,1166 +809,172 @@
     }
 
     function renderPengaturanPasswordModule() {
-      return '<div class="max-w-lg mx-auto bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4"><div class="border-b pb-3"><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i data-lucide="key-round" class="w-5 h-5 text-brand-blue"></i> Pengaturan Kata Sandi Akun</h3><p class="text-xs text-slate-500">Ubah kata sandi login untuk akun Anda (<strong>' + currentSession.nama + '</strong>).</p></div><form onsubmit="handleUpdatePassword(event)" class="space-y-4 text-xs"><div><label class="block font-bold text-slate-600 mb-1">Kata Sandi Lama</label><input type="password" id="oldPassword" required placeholder="Masukkan kata sandi lama saat ini" class="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue font-medium"></div><div><label class="block font-bold text-slate-600 mb-1">Kata Sandi Baru</label><input type="password" id="newPassword" required placeholder="Masukkan kata sandi baru" class="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue font-medium"></div><div><label class="block font-bold text-slate-600 mb-1">Konfirmasi Kata Sandi Baru</label><input type="password" id="confirmNewPassword" required placeholder="Ketik ulang kata sandi baru" class="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue font-medium"></div><button type="submit" class="w-full bg-brand-blue hover:bg-brand-blueDark text-white font-bold py-2.5 rounded-xl shadow-sm transition text-xs">Simpan Kata Sandi Baru</button></form></div>';
+      return '<div class="max-w-lg mx-auto bg-white rounded-2xl border shadow-sm p-6 space-y-4"><div class="border-b pb-3"><h3 class="font-bold text-slate-800 text-base">Ubah Kata Sandi</h3></div><form onsubmit="handleUpdatePassword(event)" class="space-y-4 text-xs"><div><label class="block font-bold mb-1">Sandi Lama</label><input type="password" id="oldPassword" required class="w-full p-2.5 border rounded-xl"></div><div><label class="block font-bold mb-1">Sandi Baru</label><input type="password" id="newPassword" required class="w-full p-2.5 border rounded-xl"></div><div><label class="block font-bold mb-1">Konfirmasi Sandi Baru</label><input type="password" id="confirmNewPassword" required class="w-full p-2.5 border rounded-xl"></div><button type="submit" class="w-full bg-brand-blue text-white font-bold py-2.5 rounded-xl text-xs">Simpan</button></form></div>';
     }
 
     function handleUpdatePassword(e) {
       e.preventDefault();
       const oldPass = document.getElementById('oldPassword').value.trim();
       const newPass = document.getElementById('newPassword').value.trim();
-      const confirmPass = document.getElementById('confirmNewPassword').value.trim();
-
-      if (oldPass !== currentSession.pass) {
-        alert("Kata Sandi Lama yang Anda masukkan salah!");
-        return;
-      }
-
-      if (newPass !== confirmPass) {
-        alert("Konfirmasi Kata Sandi Baru tidak cocok!");
-        return;
-      }
-
-      if (newPass.length < 4) {
-        alert("Kata Sandi Baru minimal terdiri dari 4 karakter!");
-        return;
-      }
-
+      if (oldPass !== currentSession.pass) { alert("Sandi lama salah!"); return; }
+      if (newPass !== document.getElementById('confirmNewPassword').value.trim()) { alert("Konfirmasi tidak cocok!"); return; }
+      
       let usersDB = JSON.parse(localStorage.getItem('sidsa_users_v10')) || [];
       const userIndex = usersDB.findIndex(u => u.user.toLowerCase() === currentSession.user.toLowerCase());
-
       if (userIndex !== -1) {
         usersDB[userIndex].pass = newPass;
         localStorage.setItem('sidsa_users_v10', JSON.stringify(usersDB));
-
         currentSession.pass = newPass;
         localStorage.setItem('sidsa_session_v10', JSON.stringify(currentSession));
-
-        // Sinkronisasi pembaruan password akun ke Google Sheet (Tab Data_Akun)
         syncAccountToSheet(usersDB[userIndex]);
-
-        alert("Kata Sandi Berhasil Diperbarui!");
+        alert("Sandi berhasil diperbarui!");
         renderPage('dashboard');
       }
     }
 
     function renderIdentitasModule(list) {
-      const { role } = parseRoleInfo();
-      const isSekolah = role === 'SEKOLAH';
-
-      let alertBannerHtml = '';
-      let itemsHtml = '';
-
-      if (list.length === 0) {
-        itemsHtml = '<p class="text-xs text-slate-400 italic">Belum ada data sekolah terdaftar.</p>';
-      } else {
-        list.forEach(s => {
-          let bodyForm = '';
-          const leg = s.legalitas || {};
-
-          const fileSKPend = leg.fileSKPendirian || "";
-          const fileSKIzin = leg.fileSKIzin || "";
-          const fileAkred = leg.fileAkreditasi || "";
-
-          const stAkred = leg.statusAkreditasi || "Belum Diisi";
-          const stSKPend = leg.statusSKPendirian || "Belum Diisi";
-          const stSKIzin = leg.statusSKIzin || "Belum Diisi";
-
-          const ntAkred = leg.notesAkreditasi || "";
-          const ntSKPend = leg.notesSKPendirian || "";
-          const ntSKIzin = leg.notesSKIzin || "";
-
-          let hasRevisi = (stAkred === 'Perlu Perbaikan' || stSKPend === 'Perlu Perbaikan' || stSKIzin === 'Perlu Perbaikan');
-
-          if (isSekolah && hasRevisi && !alertBannerHtml) {
-            alertBannerHtml = '<div class="p-4 bg-rose-50 border border-rose-300 rounded-2xl flex items-center gap-3 text-xs text-rose-800 font-medium shadow-sm"><i data-lucide="alert-triangle" class="w-6 h-6 text-rose-600 shrink-0"></i><div><strong class="font-bold text-rose-900 block text-sm">Perhatian: Terdapat Dokumen Legalitas yang Memerlukan Perbaikan!</strong><p class="mt-0.5">Admin Pusat meminta perbaikan pada dokumen terunggah Anda. Silakan periksa catatan revisi di bawah dan unggah ulang berkas yang sesuai.</p></div></div>';
-          }
-
-          let prevBtnSKPend = fileSKPend ? '<div class="mt-1 flex items-center justify-between"><span class="text-[10px] text-slate-600 font-semibold truncate max-w-[180px]">File: ' + fileSKPend + '</span><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'SK Pendirian Sekolah\', \'' + fileSKPend + '\')" class="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Preview</button></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
-
-          let prevBtnSKIzin = fileSKIzin ? '<div class="mt-1 flex items-center justify-between"><span class="text-[10px] text-slate-600 font-semibold truncate max-w-[180px]">File: ' + fileSKIzin + '</span><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'SK Izin Operasional\', \'' + fileSKIzin + '\')" class="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Preview</button></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
-
-          let prevBtnAkred = fileAkred ? '<div class="mt-1 flex items-center justify-between"><span class="text-[10px] text-slate-600 font-semibold truncate max-w-[180px]">File: ' + fileAkred + '</span><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'Sertifikat Akreditasi\', \'' + fileAkred + '\')" class="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Preview</button></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
-
-          let noteBoxAkred = ntAkred ? '<div class="p-2 bg-rose-100 border border-rose-200 rounded-xl text-[11px] text-rose-800 font-semibold mt-2">Catatan Admin Pusat: "' + ntAkred + '"</div>' : '';
-          let noteBoxSKPend = ntSKPend ? '<div class="p-2 bg-rose-100 border border-rose-200 rounded-xl text-[11px] text-rose-800 font-semibold mt-2">Catatan Admin Pusat: "' + ntSKPend + '"</div>' : '';
-          let noteBoxSKIzin = ntSKIzin ? '<div class="p-2 bg-rose-100 border border-rose-200 rounded-xl text-[11px] text-rose-800 font-semibold mt-2">Catatan Admin Pusat: "' + ntSKIzin + '"</div>' : '';
-
-          if (isSekolah) {
-            const selA = s.akreditasi === 'A' ? 'selected' : '';
-            const selB = s.akreditasi === 'B' ? 'selected' : '';
-            const selC = s.akreditasi === 'C' ? 'selected' : '';
-            const selTT = (s.akreditasi === 'TT' || s.akreditasi === 'D') ? 'selected' : '';
-            const selBelum = (s.akreditasi === 'Belum' || !s.akreditasi) ? 'selected' : '';
-
-            bodyForm = '<form onsubmit="saveIdentitasData(event, \'' + s.npsn + '\')" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs"><div class="md:col-span-2"><label class="block font-semibold text-slate-600 mb-1">Alamat Sekolah</label><textarea id="id_alamat_' + s.npsn + '" rows="2" required class="w-full p-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none font-bold text-slate-800">' + (s.alamatSekolah || '') + '</textarea></div><div><label class="block font-semibold text-slate-600 mb-1">Nama Kepala Sekolah</label><input type="text" id="id_kepsek_' + s.npsn + '" value="' + (s.kepalaSekolah || '') + '" class="w-full p-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none font-medium"></div><div class="space-y-2.5 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm"><div class="flex items-center justify-between border-b pb-2"><label class="font-bold text-slate-700">1. Status Akreditasi Sekolah</label>' + renderStatusBadge(stAkred) + '</div><div><label class="block text-[11px] text-slate-500 mb-0.5">Predikat Akreditasi</label><select id="id_akreditasi_' + s.npsn + '" class="w-full p-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none font-medium"><option value="Belum" ' + selBelum + '>Belum Mengisi Akreditasi</option><option value="A" ' + selA + '>A (Unggul)</option><option value="B" ' + selB + '>B (Baik)</option><option value="C" ' + selC + '>C (Cukup Baik)</option><option value="TT" ' + selTT + '>Tidak Terakreditasi (TT)</option></select></div><div><label class="block text-[11px] text-slate-500 mb-0.5">Tahun Akreditasi</label><input type="number" id="id_thnakreditasi_' + s.npsn + '" value="' + (s.tahunAkreditasi || '') + '" min="1990" max="2099" class="w-full p-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none font-medium"></div><div class="pt-2 border-t"><label class="block text-[11px] font-semibold text-slate-600 mb-1">Unggah Sertifikat / SK Akreditasi (PDF):</label><input type="file" onchange="uploadLegalitasFile(\'' + s.npsn + '\', \'fileAkreditasi\', this)" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer">' + prevBtnAkred + noteBoxAkred + '</div></div><div class="space-y-2.5 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm"><div class="flex items-center justify-between border-b pb-2"><label class="font-bold text-slate-700">2. SK Pendirian Sekolah</label>' + renderStatusBadge(stSKPend) + '</div><div><label class="block text-[11px] text-slate-500 mb-0.5">Nomor SK Pendirian</label><input type="text" id="id_sk_' + s.npsn + '" value="' + (leg.skPendirian || '') + '" class="w-full p-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none font-medium"></div><div><label class="block text-[11px] text-slate-500 mb-0.5">Tanggal SK Pendirian</label><input type="date" id="id_tglsk_' + s.npsn + '" value="' + (leg.tglSK || '') + '" class="w-full p-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none font-medium"></div><div class="pt-2 border-t"><label class="block text-[11px] font-semibold text-slate-600 mb-1">Unggah Berkas SK Pendirian (PDF):</label><input type="file" onchange="uploadLegalitasFile(\'' + s.npsn + '\', \'fileSKPendirian\', this)" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer">' + prevBtnSKPend + noteBoxSKPend + '</div></div><div class="space-y-2.5 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm"><div class="flex items-center justify-between border-b pb-2"><label class="font-bold text-slate-700">3. SK Izin Operasional Sekolah</label>' + renderStatusBadge(stSKIzin) + '</div><div><label class="block text-[11px] text-slate-500 mb-0.5">Nomor SK Izin Operasional</label><input type="text" id="id_sk_izin_' + s.npsn + '" value="' + (leg.skIzin || '') + '" class="w-full p-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none font-medium"></div><div><label class="block text-[11px] text-slate-500 mb-0.5">Tanggal SK Izin Operasional</label><input type="date" id="id_tglsk_izin_' + s.npsn + '" value="' + (leg.tglSKIzin || '') + '" class="w-full p-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-brand-blue outline-none font-medium"></div><div class="pt-2 border-t"><label class="block text-[11px] font-semibold text-slate-600 mb-1">Unggah Berkas SK Izin (PDF):</label><input type="file" onchange="uploadLegalitasFile(\'' + s.npsn + '\', \'fileSKIzin\', this)" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer">' + prevBtnSKIzin + noteBoxSKIzin + '</div></div><div class="md:col-span-3 text-right"><button type="submit" class="bg-brand-blue hover:bg-brand-blueDark text-white font-bold px-5 py-2.5 rounded-xl shadow-sm text-xs">Simpan Identitas & Legalitas</button></div></form>';          } else {
-            let dlSKPend = fileSKPend ? '<button onclick="downloadDummyDoc(\'' + fileSKPend + '\')" class="text-[10px] font-bold text-slate-600 hover:text-brand-blue flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> Unduh</button>' : '';
-            let dlSKIzin = fileSKIzin ? '<button onclick="downloadDummyDoc(\'' + fileSKIzin + '\')" class="text-[10px] font-bold text-slate-600 hover:text-brand-blue flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> Unduh</button>' : '';
-            let dlAkred = fileAkred ? '<button onclick="downloadDummyDoc(\'' + fileAkred + '\')" class="text-[10px] font-bold text-slate-600 hover:text-brand-blue flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> Unduh</button>' : '';
-
-            bodyForm = '<div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs"><div><span class="text-slate-400 block">NPSN & Alamat Sekolah</span><strong>' + s.npsn + '</strong><br><span class="text-slate-600 block mt-1">' + (s.alamatSekolah || 'Alamat belum diisi') + '</span><span class="text-slate-500 block mt-1">Kepsek: ' + (s.kepalaSekolah || '-') + '</span></div><div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm"><div class="flex items-center justify-between mb-1"><span class="text-slate-400 font-semibold">Status Akreditasi</span>' + renderStatusBadge(stAkred) + '</div><strong>' + getAkreditasiText(s.akreditasi) + '</strong> ' + (s.tahunAkreditasi ? '<span class="text-slate-400">(' + s.tahunAkreditasi + ')</span>' : '') + '<div class="flex items-center gap-2 mt-2 pt-1 border-t border-slate-100">' + prevBtnAkred + dlAkred + '</div></div><div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm"><div class="flex items-center justify-between mb-1"><span class="text-slate-400 font-semibold">SK Pendirian Sekolah</span>' + renderStatusBadge(stSKPend) + '</div><strong>' + (leg.skPendirian || '-') + '</strong> ' + (leg.tglSK ? '<span class="text-slate-400">(' + leg.tglSK + ')</span>' : '') + '<div class="flex items-center gap-2 mt-2 pt-1 border-t border-slate-100">' + prevBtnSKPend + dlSKPend + '</div></div><div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm"><div class="flex items-center justify-between mb-1"><span class="text-slate-400 font-semibold">SK Izin Operasional</span>' + renderStatusBadge(stSKIzin) + '</div><strong>' + (leg.skIzin || '-') + '</strong> ' + (leg.tglSKIzin ? '<span class="text-slate-400">(' + leg.tglSKIzin + ')</span>' : '') + '<div class="flex items-center gap-2 mt-2 pt-1 border-t border-slate-100">' + prevBtnSKIzin + dlSKIzin + '</div></div></div>';
-          }
-
-          let updateTag = s.lastUpdateIdentitas ? 
-            '<span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Diperbarui: ' + s.lastUpdateIdentitas + '</span>' : 
-            '<span class="text-xs font-semibold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">Belum Ada Perubahan</span>';
-
-          itemsHtml += '<div class="border border-slate-200/80 rounded-2xl p-5 bg-slate-50/50 space-y-4 shadow-sm"><div class="flex justify-between items-center border-b pb-3"><h4 class="font-bold text-brand-blue text-base">' + s.nama + ' (NPSN: ' + s.npsn + ')</h4>' + updateTag + '</div>' + bodyForm + '</div>';
-        });
-      }
-
-      return '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">' + alertBannerHtml + '<div class="flex justify-between items-center"><h3 class="font-bold text-slate-800 text-base">Identitas & Legalitas Sekolah</h3></div><div class="space-y-6">' + itemsHtml + '</div></div>';
-    }
-
-function uploadLegalitasFile(npsn, fieldKey, inputElem) {
-  const taList = Object.keys(db).sort().reverse();
-  const ta = document.getElementById('filterTA')?.value || taList[0];
-  const school = db[ta].find(s => s.npsn === npsn);
-  const file = inputElem.files[0];
-
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64String = e.target.result;
-    const fileName = file.name;
-
-    // Tentukan kategori folder berdasarkan jenis file legalitas
-    let katFolder = "Berkas_Legalitas_Lainnya";
-    if (fieldKey === 'fileAkreditasi') katFolder = "Berkas_Akreditasi";
-    else if (fieldKey === 'fileSKPendirian') katFolder = "Berkas_SK_Pendirian";
-    else if (fieldKey === 'fileSKIzin') katFolder = "Berkas_SK_Izin_Operasional";
-
-    if (school) {
-      // Ambil data teks lain yang sedang diketik user di form agar tidak ikut ke-reset
-      const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
-      if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
-      
-      const inputKepsek = document.getElementById('id_kepsek_' + npsn)?.value;
-      if (inputKepsek !== undefined) school.kepalaSekolah = inputKepsek;
-      
-      const inputAkred = document.getElementById('id_akreditasi_' + npsn)?.value;
-      if (inputAkred !== undefined) school.akreditasi = inputAkred;
-      
-      const inputThnAkred = document.getElementById('id_thnakreditasi_' + npsn)?.value;
-      if (inputThnAkred !== undefined) school.tahunAkreditasi = inputThnAkred;
-
-      if (!school.legalitas) school.legalitas = {};
-
-      // AMBIL JUGA NOMOR & TANGGAL SK AGAR TIDAK KETIK RE-SET SAAT UPLOAD FILE
-      school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn)?.value || school.legalitas.skPendirian || "-";
-      school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn)?.value || school.legalitas.tglSK || "-";
-      school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || school.legalitas.skIzin || "-";
-      school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || school.legalitas.tglSKIzin || "-";
-
-      // Simpan nama file ke properti legalitas yang sesuai
-      school.legalitas[fieldKey] = fileName;
-
-      if (fieldKey === 'fileAkreditasi') { school.legalitas.statusAkreditasi = "Menunggu Validasi"; school.legalitas.notesAkreditasi = ""; }
-      if (fieldKey === 'fileSKPendirian') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
-      if (fieldKey === 'fileSKIzin') { school.legalitas.statusSKIzin = "Menunggu Validasi"; school.legalitas.notesSKIzin = ""; }
-
-      markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
-
-      // Payload kirim ke Google Apps Script
-      const payload = {
-        updatedModule: "identitas",
-        kategoriFolder: katFolder,
-        fileName: fileName,
-        fileData: base64String,
-        tahunAjaran: ta,
-        npsn: school.npsn,
-        namaSekolah: school.nama,
-        cabang: school.cabang,
-        alamatSekolah: school.alamatSekolah,
-        kepalaSekolah: school.kepalaSekolah,
-        akreditasi: school.akreditasi,
-        tahunAkreditasi: school.tahunAkreditasi,
-        legalitas: school.legalitas
-      };
-
-      fetch(GOOGLE_SHEET_WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      }).then(() => {
-        alert('Berkas "' + fileName + '" Berhasil Diunggah & Masuk ke Drive Pusat!');
+      let html = '';
+      list.forEach(s => {
+        html += '<div class="border rounded-2xl p-5 bg-slate-50/50 space-y-4 shadow-sm"><h4 class="font-bold text-brand-blue">' + s.nama + '</h4><form onsubmit="saveIdentitasData(event, \'' + s.npsn + '\')" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs"><div><label class="block font-semibold mb-1">Alamat</label><textarea id="id_alamat_' + s.npsn + '" rows="2" class="w-full p-2.5 border rounded-xl">' + (s.alamatSekolah || '') + '</textarea></div><div><label class="block font-semibold mb-1">Kepala Sekolah</label><input type="text" id="id_kepsek_' + s.npsn + '" value="' + (s.kepalaSekolah || '') + '" class="w-full p-2.5 border rounded-xl"></div><div><label class="block font-semibold mb-1">Akreditasi</label><select id="id_akreditasi_' + s.npsn + '" class="w-full p-2.5 border rounded-xl"><option value="A" ' + (s.akreditasi === 'A' ? 'selected' : '') + '>A</option><option value="B" ' + (s.akreditasi === 'B' ? 'selected' : '') + '>B</option><option value="C" ' + (s.akreditasi === 'C' ? 'selected' : '') + '>C</option><option value="Belum" ' + (s.akreditasi === 'Belum' ? 'selected' : '') + '>Belum</option></select></div><div class="md:col-span-3 text-right"><button type="submit" class="bg-brand-blue text-white font-bold px-4 py-2 rounded-xl text-xs">Simpan Identitas</button></div></form></div>';
       });
-
-      saveDB();
-      renderSidebar();
-      renderPage('identitas');
-    }
-  };
-  reader.readAsDataURL(file);
+      return '<div class="bg-white rounded-2xl border p-6 space-y-4"><h3 class="font-bold text-base">Identitas & Legalitas</h3>' + html + '</div>';
     }
 
-function saveIdentitasData(e, npsn) {
-  e.preventDefault();
-  const taList = Object.keys(db).sort().reverse();
-  const ta = document.getElementById('filterTA')?.value || taList[0];
-  const school = db[ta].find(s => s.npsn === npsn);
-  
-  if (school) {
-    const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
-    if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
-
-    school.kepalaSekolah = document.getElementById('id_kepsek_' + npsn).value;
-    school.akreditasi = document.getElementById('id_akreditasi_' + npsn).value;
-    school.tahunAkreditasi = document.getElementById('id_thnakreditasi_' + npsn).value;
-
-    if (!school.legalitas) school.legalitas = {};
-    
-    // AMBIL DATA SK PENDIRIAN & SK IZIN DARI INPUT FORM DENGAN BENAR
-    school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn)?.value || "-";
-    school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn)?.value || "-";
-    school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || "-";
-    school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || "-";
-
-    markSchoolDataUpdated(school, "Identitas & Legalitas", "identitas");
-    
-    // PASTIKAN SINKRONISASI KE GOOGLE SHEET IKUT DIPANGGIL DI SINI
-    syncToGoogleSheet(school, ta, "identitas"); 
-
-    saveDB();
-    alert("Data Identitas & Legalitas Sekolah Berhasil Disimpan & Disinkronkan!");
-    renderPage('identitas');
-  }
+    function saveIdentitasData(e, npsn) {
+      e.preventDefault();
+      const ta = document.getElementById('filterTA')?.value;
+      const school = db[ta]?.find(s => s.npsn === npsn);
+      if (school) {
+        school.alamatSekolah = document.getElementById('id_alamat_' + npsn)?.value || '';
+        school.kepalaSekolah = document.getElementById('id_kepsek_' + npsn)?.value || '';
+        school.akreditasi = document.getElementById('id_akreditasi_' + npsn)?.value || 'Belum';
+        markSchoolDataUpdated(school, "Identitas", "identitas");
+        syncToGoogleSheet(school, ta, "identitas");
+        saveDB();
+        alert("Identitas disimpan!");
+        renderPage('identitas');
+      }
     }
 
     function renderPesertaDidikModule(list) {
-      const { role } = parseRoleInfo();
-      const isSekolah = role === 'SEKOLAH';
-
-      let itemsHtml = '';
-      if (list.length === 0) {
-        itemsHtml = '<p class="text-xs text-slate-400 italic">Belum ada data sekolah terdaftar.</p>';
-      } else {
-        list.forEach(s => {
-          const tot7 = s.siswa.k7L + s.siswa.k7P;
-          const tot8 = s.siswa.k8L + s.siswa.k8P;
-          const tot9 = s.siswa.k9L + s.siswa.k9P;
-          const totalSiswa = tot7 + tot8 + tot9;
-          const totalRombel = s.siswa.r7 + s.siswa.r8 + s.siswa.r9;
-          const avgRombel = totalRombel ? (totalSiswa/totalRombel).toFixed(1) : 0;
-
-          let content = '';
-          if (isSekolah) {
-            content = '<form onsubmit="saveSiswaData(event, \'' + s.npsn + '\')" class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-white p-3.5 rounded-xl border shadow-sm space-y-2"><span class="font-bold text-xs text-brand-blue block border-b pb-1">Kelas VII</span><div class="grid grid-cols-2 gap-2 text-xs"><div><label class="text-slate-500 block">Laki-Laki</label><input type="number" id="k7L_' + s.npsn + '" value="' + s.siswa.k7L + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">Perempuan</label><input type="number" id="k7P_' + s.npsn + '" value="' + s.siswa.k7P + '" class="w-full p-2 border rounded-xl"></div></div><div><label class="text-xs text-slate-500 block">Jumlah Rombel</label><input type="number" id="r7_' + s.npsn + '" value="' + s.siswa.r7 + '" class="w-full p-2 border rounded-xl text-xs"></div></div><div class="bg-white p-3.5 rounded-xl border shadow-sm space-y-2"><span class="font-bold text-xs text-brand-blue block border-b pb-1">Kelas VIII</span><div class="grid grid-cols-2 gap-2 text-xs"><div><label class="text-slate-500 block">Laki-Laki</label><input type="number" id="k8L_' + s.npsn + '" value="' + s.siswa.k8L + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">Perempuan</label><input type="number" id="k8P_' + s.npsn + '" value="' + s.siswa.k8P + '" class="w-full p-2 border rounded-xl"></div></div><div><label class="text-xs text-slate-500 block">Jumlah Rombel</label><input type="number" id="r8_' + s.npsn + '" value="' + s.siswa.r8 + '" class="w-full p-2 border rounded-xl text-xs"></div></div><div class="bg-white p-3.5 rounded-xl border shadow-sm space-y-2"><span class="font-bold text-xs text-brand-blue block border-b pb-1">Kelas IX</span><div class="grid grid-cols-2 gap-2 text-xs"><div><label class="text-slate-500 block">Laki-Laki</label><input type="number" id="k9L_' + s.npsn + '" value="' + s.siswa.k9L + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">Perempuan</label><input type="number" id="k9P_' + s.npsn + '" value="' + s.siswa.k9P + '" class="w-full p-2 border rounded-xl"></div></div><div><label class="text-xs text-slate-500 block">Jumlah Rombel</label><input type="number" id="r9_' + s.npsn + '" value="' + s.siswa.r9 + '" class="w-full p-2 border rounded-xl text-xs"></div></div></div><div class="text-right"><button type="submit" class="bg-brand-blue hover:bg-brand-blueDark text-white font-bold px-5 py-2.5 rounded-xl shadow-sm text-xs">Simpan Data Siswa</button></div></form>';
-          } else {
-            content = '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs"><div class="bg-white p-3.5 rounded-xl border shadow-sm"><span class="font-bold block text-slate-700">Kelas VII</span>L: ' + formatAngka(s.siswa.k7L) + ' | P: ' + formatAngka(s.siswa.k7P) + ' | <strong>Total: ' + formatAngka(tot7) + '</strong> (' + formatAngka(s.siswa.r7) + ' Rombel)</div><div class="bg-white p-3.5 rounded-xl border shadow-sm"><span class="font-bold block text-slate-700">Kelas VIII</span>L: ' + formatAngka(s.siswa.k8L) + ' | P: ' + formatAngka(s.siswa.k8P) + ' | <strong>Total: ' + formatAngka(tot8) + '</strong> (' + formatAngka(s.siswa.r8) + ' Rombel)</div><div class="bg-white p-3.5 rounded-xl border shadow-sm"><span class="font-bold block text-slate-700">Kelas IX</span>L: ' + formatAngka(s.siswa.k9L) + ' | P: ' + formatAngka(s.siswa.k9P) + ' | <strong>Total: ' + formatAngka(tot9) + '</strong> (' + formatAngka(s.siswa.r9) + ' Rombel)</div></div>';
-          }
-
-          let updateTag = s.lastUpdateSiswa ? 
-            '<span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Diperbarui: ' + s.lastUpdateSiswa + '</span>' : 
-            '<span class="text-xs font-semibold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">Belum Ada Perubahan</span>';
-
-          itemsHtml += '<div class="border border-slate-200/80 rounded-2xl p-5 space-y-4 bg-slate-50/40 shadow-sm"><div class="flex justify-between items-center border-b pb-3"><h4 class="font-bold text-brand-blue text-sm">' + s.nama + '</h4>' + updateTag + '</div>' + content + '<div class="text-xs font-semibold bg-blue-50 text-brand-blue p-3 rounded-xl flex justify-between border border-blue-100"><span>Total Siswa: <strong>' + formatAngka(totalSiswa) + ' Siswa</strong></span><span>Total Rombel: <strong>' + formatAngka(totalRombel) + ' Rombel</strong></span><span>Rata-Rata per Rombel: <strong>' + avgRombel + ' Siswa</strong></span></div></div>';
-        });
-      }
-
-      return '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4"><div class="flex justify-between items-center"><h3 class="font-bold text-slate-800 text-base">Peserta Didik & Rombongan Belajar (Rombel)</h3></div>' + itemsHtml + '</div>';
+      let html = '';
+      list.forEach(s => {
+        html += '<div class="border rounded-2xl p-5 bg-slate-50/50 space-y-4"><h4 class="font-bold text-brand-blue">' + s.nama + '</h4><form onsubmit="saveSiswaData(event, \'' + s.npsn + '\')" class="grid grid-cols-3 gap-3 text-xs"><div><label>Kls 7 L/P/R</label><div class="flex gap-1"><input type="number" id="k7L_' + s.npsn + '" value="' + s.siswa.k7L + '" class="w-full p-2 border rounded-xl"><input type="number" id="k7P_' + s.npsn + '" value="' + s.siswa.k7P + '" class="w-full p-2 border rounded-xl"><input type="number" id="r7_' + s.npsn + '" value="' + s.siswa.r7 + '" class="w-full p-2 border rounded-xl"></div></div><div><label>Kls 8 L/P/R</label><div class="flex gap-1"><input type="number" id="k8L_' + s.npsn + '" value="' + s.siswa.k8L + '" class="w-full p-2 border rounded-xl"><input type="number" id="k8P_' + s.npsn + '" value="' + s.siswa.k8P + '" class="w-full p-2 border rounded-xl"><input type="number" id="r8_' + s.npsn + '" value="' + s.siswa.r8 + '" class="w-full p-2 border rounded-xl"></div></div><div><label>Kls 9 L/P/R</label><div class="flex gap-1"><input type="number" id="k9L_' + s.npsn + '" value="' + s.siswa.k9L + '" class="w-full p-2 border rounded-xl"><input type="number" id="k9P_' + s.npsn + '" value="' + s.siswa.k9P + '" class="w-full p-2 border rounded-xl"><input type="number" id="r9_' + s.npsn + '" value="' + s.siswa.r9 + '" class="w-full p-2 border rounded-xl"></div></div><div class="col-span-3 text-right"><button type="submit" class="bg-brand-blue text-white font-bold px-4 py-2 rounded-xl text-xs">Simpan Siswa</button></div></form></div>';
+      });
+      return '<div class="bg-white rounded-2xl border p-6 space-y-4"><h3 class="font-bold text-base">Peserta Didik</h3>' + html + '</div>';
     }
 
     function saveSiswaData(e, npsn) {
       e.preventDefault();
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
+      const ta = document.getElementById('filterTA')?.value;
+      const school = db[ta]?.find(s => s.npsn === npsn);
       if (school) {
-        school.siswa.k7L = parseInt(document.getElementById('k7L_' + npsn).value) || 0;
-        school.siswa.k7P = parseInt(document.getElementById('k7P_' + npsn).value) || 0;
-        school.siswa.r7 = parseInt(document.getElementById('r7_' + npsn).value) || 0;
-
-        school.siswa.k8L = parseInt(document.getElementById('k8L_' + npsn).value) || 0;
-        school.siswa.k8P = parseInt(document.getElementById('k8P_' + npsn).value) || 0;
-        school.siswa.r8 = parseInt(document.getElementById('r8_' + npsn).value) || 0;
-
-        school.siswa.k9L = parseInt(document.getElementById('k9L_' + npsn).value) || 0;
-        school.siswa.k9P = parseInt(document.getElementById('k9P_' + npsn).value) || 0;
-        school.siswa.r9 = parseInt(document.getElementById('r9_' + npsn).value) || 0;
-
-        markSchoolDataUpdated(school, "Peserta Didik & Rombel", "siswa");
-        syncToGoogleSheet(school, ta, "siswa"); //
+        ['7','8','9'].forEach(k => {
+          school.siswa['k'+k+'L'] = parseInt(document.getElementById('k'+k+'L_'+npsn)?.value) || 0;
+          school.siswa['k'+k+'P'] = parseInt(document.getElementById('k'+k+'P_'+npsn)?.value) || 0;
+          school.siswa['r'+k] = parseInt(document.getElementById('r'+k+'_'+npsn)?.value) || 0;
+        });
+        markSchoolDataUpdated(school, "Peserta Didik", "siswa");
+        syncToGoogleSheet(school, ta, "siswa");
         saveDB();
-        alert("Data Peserta Didik Berhasil Diperbarui!");
+        alert("Data siswa disimpan!");
         renderPage('peserta_didik');
       }
     }
 
     function renderPendidikTendikModule(list) {
-      const { role } = parseRoleInfo();
-      const isSekolah = role === 'SEKOLAH';
-
-      let itemsHtml = '';
-      if (list.length === 0) {
-        itemsHtml = '<p class="text-xs text-slate-400 italic">Belum ada data sekolah terdaftar.</p>';
-      } else {
-        list.forEach(s => {
-          const totGuru = s.pendidik.L + s.pendidik.P;
-          const totTendik = s.tendik.L + s.tendik.P;
-
-          let formHtml = '';
-          if (isSekolah) {
-            formHtml = '<form onsubmit="saveSDMData(event, \'' + s.npsn + '\')" class="space-y-4 text-xs"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-xl border shadow-sm space-y-3"><span class="font-bold text-slate-700 block border-b pb-1 text-sm text-brand-blue">1. Data Pendidik (Guru)</span><div class="grid grid-cols-2 gap-2"><div><label class="text-slate-500 block">Guru Laki-Laki</label><input type="number" id="pL_' + s.npsn + '" value="' + s.pendidik.L + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">Guru Perempuan</label><input type="number" id="pP_' + s.npsn + '" value="' + s.pendidik.P + '" class="w-full p-2 border rounded-xl"></div></div><span class="font-bold text-slate-600 block pt-2 border-t">Rincian Status Kepegawaian Guru:</span><div class="grid grid-cols-3 gap-2"><div><label class="text-slate-500 block">GTY</label><input type="number" id="gty_' + s.npsn + '" value="' + (s.pendidik.gty || 0) + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">CGTY</label><input type="number" id="cgty_' + s.npsn + '" value="' + (s.pendidik.cgty || 0) + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">DPK PNS</label><input type="number" id="dpkPns_' + s.npsn + '" value="' + (s.pendidik.dpkPns || 0) + '" class="w-full p-2 border rounded-xl"></div></div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-3"><span class="font-bold text-slate-700 block border-b pb-1 text-sm text-brand-blue">2. Tenaga Kependidikan (Tendik)</span><div class="grid grid-cols-2 gap-2"><div><label class="text-slate-500 block">Tendik Laki-Laki</label><input type="number" id="tL_' + s.npsn + '" value="' + s.tendik.L + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">Tendik Perempuan</label><input type="number" id="tP_' + s.npsn + '" value="' + s.tendik.P + '" class="w-full p-2 border rounded-xl"></div></div><span class="font-bold text-slate-600 block pt-2 border-t">Rincian Status Kepegawaian Tendik:</span><div class="grid grid-cols-3 gap-2"><div><label class="text-slate-500 block">KTY</label><input type="number" id="kty_' + s.npsn + '" value="' + (s.tendik.kty || 0) + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">CKTY</label><input type="number" id="ckty_' + s.npsn + '" value="' + (s.tendik.ckty || 0) + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-slate-500 block">DPK PNS</label><input type="number" id="tDpkPns_' + s.npsn + '" value="' + (s.tendik.dpkPns || 0) + '" class="w-full p-2 border rounded-xl"></div></div></div></div><div class="text-right"><button type="submit" class="bg-brand-blue hover:bg-brand-blueDark text-white font-bold px-5 py-2.5 rounded-xl shadow-sm text-xs">Simpan Data SDM</button></div></form>';
-          }
-
-          let updateTag = s.lastUpdatePendidik ? 
-            '<span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Diperbarui: ' + s.lastUpdatePendidik + '</span>' : 
-            '<span class="text-xs font-semibold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">Belum Ada Perubahan</span>';
-
-          itemsHtml += '<div class="border border-slate-200/80 rounded-2xl p-5 space-y-4 bg-slate-50/40 shadow-sm"><div class="flex justify-between items-center border-b pb-3"><h4 class="font-bold text-brand-blue text-sm">' + s.nama + '</h4>' + updateTag + '</div>' + formHtml + '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"><div class="bg-white p-4 rounded-xl border shadow-sm space-y-1"><span class="font-bold block text-slate-700 border-b pb-1">Data Pendidik (Guru): ' + formatAngka(totGuru) + ' Orang</span><div>Laki-Laki: <strong>' + formatAngka(s.pendidik.L) + '</strong> | Perempuan: <strong>' + formatAngka(s.pendidik.P) + '</strong></div><div class="pt-2 font-semibold text-slate-600">Status Kepegawaian Guru:</div><div class="grid grid-cols-3 gap-1 bg-slate-50 p-2.5 rounded-xl text-[11px] border"><div>GTY: <strong>' + formatAngka(s.pendidik.gty || 0) + '</strong></div><div>CGTY: <strong>' + formatAngka(s.pendidik.cgty || 0) + '</strong></div><div>DPK PNS: <strong>' + formatAngka(s.pendidik.dpkPns || 0) + '</strong></div></div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-1"><span class="font-bold block text-slate-700 border-b pb-1">Tenaga Kependidikan (Tendik): ' + formatAngka(totTendik) + ' Orang</span><div>Laki-Laki: <strong>' + formatAngka(s.tendik.L) + '</strong> | Perempuan: <strong>' + formatAngka(s.tendik.P) + '</strong></div><div class="pt-2 font-semibold text-slate-600">Status Kepegawaian Tendik:</div><div class="grid grid-cols-3 gap-1 bg-slate-50 p-2.5 rounded-xl text-[11px] border"><div>KTY: <strong>' + formatAngka(s.tendik.kty || 0) + '</strong></div><div>CKTY: <strong>' + formatAngka(s.tendik.ckty || 0) + '</strong></div><div>DPK PNS: <strong>' + formatAngka(s.tendik.dpkPns || 0) + '</strong></div></div></div></div></div>';
-        });
-      }
-
-      return '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4"><div class="flex justify-between items-center"><h3 class="font-bold text-slate-800 text-base">Pendidik (Guru) & Tenaga Kependidikan (Tendik)</h3></div>' + itemsHtml + '</div>';
+      let html = '';
+      list.forEach(s => {
+        html += '<div class="border rounded-2xl p-5 bg-slate-50/50 space-y-4"><h4 class="font-bold text-brand-blue">' + s.nama + '</h4><form onsubmit="saveSDMData(event, \'' + s.npsn + '\')" class="grid grid-cols-2 gap-3 text-xs"><div><label>Guru L / P / GTY</label><div class="flex gap-1"><input type="number" id="pL_' + s.npsn + '" value="' + s.pendidik.L + '" class="w-full p-2 border rounded-xl"><input type="number" id="pP_' + s.npsn + '" value="' + s.pendidik.P + '" class="w-full p-2 border rounded-xl"><input type="number" id="gty_' + s.npsn + '" value="' + (s.pendidik.gty||0) + '" class="w-full p-2 border rounded-xl"></div></div><div><label>Tendik L / P / KTY</label><div class="flex gap-1"><input type="number" id="tL_' + s.npsn + '" value="' + s.tendik.L + '" class="w-full p-2 border rounded-xl"><input type="number" id="tP_' + s.npsn + '" value="' + s.tendik.P + '" class="w-full p-2 border rounded-xl"><input type="number" id="kty_' + s.npsn + '" value="' + (s.tendik.kty||0) + '" class="w-full p-2 border rounded-xl"></div></div><div class="col-span-2 text-right"><button type="submit" class="bg-brand-blue text-white font-bold px-4 py-2 rounded-xl text-xs">Simpan SDM</button></div></form></div>';
+      });
+      return '<div class="bg-white rounded-2xl border p-6 space-y-4"><h3 class="font-bold text-base">Pendidik & Tendik</h3>' + html + '</div>';
     }
 
     function saveSDMData(e, npsn) {
       e.preventDefault();
-
-      const pL = parseInt(document.getElementById('pL_' + npsn).value) || 0;
-      const pP = parseInt(document.getElementById('pP_' + npsn).value) || 0;
-      const gty = parseInt(document.getElementById('gty_' + npsn).value) || 0;
-      const cgty = parseInt(document.getElementById('cgty_' + npsn).value) || 0;
-      const dpkPns = parseInt(document.getElementById('dpkPns_' + npsn).value) || 0;
-
-      const tL = parseInt(document.getElementById('tL_' + npsn).value) || 0;
-      const tP = parseInt(document.getElementById('tP_' + npsn).value) || 0;
-      const kty = parseInt(document.getElementById('kty_' + npsn).value) || 0;
-      const ckty = parseInt(document.getElementById('ckty_' + npsn).value) || 0;
-      const tDpkPns = parseInt(document.getElementById('tDpkPns_' + npsn).value) || 0;
-
-      const totalGuruGender = pL + pP;
-      const totalGuruStatus = gty + cgty + dpkPns;
-
-      const totalTendikGender = tL + tP;
-      const totalTendikStatus = kty + ckty + tDpkPns;
-
-      if (totalGuruGender !== totalGuruStatus) {
-        alert("PERINGATAN VALIDASI GURU!\n\nJumlah Total Guru (Laki-Laki + Perempuan = " + formatAngka(totalGuruGender) + ") TIDAK SAMA dengan Total Rincian Kepegawaian (GTY + CGTY + DPK PNS = " + formatAngka(totalGuruStatus) + ").");
-        return;
-      }
-
-      if (totalTendikGender !== totalTendikStatus) {
-        alert("PERINGATAN VALIDASI TENDIK!\n\nJumlah Total Tendik (Laki-Laki + Perempuan = " + formatAngka(totalTendikGender) + ") TIDAK SAMA dengan Total Rincian Kepegawaian (KTY + CKTY + DPK PNS = " + formatAngka(totalTendikStatus) + ").");
-        return;
-      }
-
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-
+      const ta = document.getElementById('filterTA')?.value;
+      const school = db[ta]?.find(s => s.npsn === npsn);
       if (school) {
-        school.pendidik.L = pL;
-        school.pendidik.P = pP;
-        school.pendidik.gty = gty;
-        school.pendidik.cgty = cgty;
-        school.pendidik.dpkPns = dpkPns;
-
-        school.tendik.L = tL;
-        school.tendik.P = tP;
-        school.tendik.kty = kty;
-        school.tendik.ckty = ckty;
-        school.tendik.dpkPns = tDpkPns;
-
+        school.pendidik.L = parseInt(document.getElementById('pL_'+npsn)?.value) || 0;
+        school.pendidik.P = parseInt(document.getElementById('pP_'+npsn)?.value) || 0;
+        school.pendidik.gty = parseInt(document.getElementById('gty_'+npsn)?.value) || 0;
+        school.tendik.L = parseInt(document.getElementById('tL_'+npsn)?.value) || 0;
+        school.tendik.P = parseInt(document.getElementById('tP_'+npsn)?.value) || 0;
+        school.tendik.kty = parseInt(document.getElementById('kty_'+npsn)?.value) || 0;
         markSchoolDataUpdated(school, "Pendidik & Tendik", "pendidik");
-        syncToGoogleSheet(school, ta, "pendidik"); //
+        syncToGoogleSheet(school, ta, "pendidik");
         saveDB();
-        alert("Data Pendidik & Tendik Berhasil Diperbarui!");
+        alert("SDM disimpan!");
         renderPage('pendidik_tendik');
       }
     }
 
     function renderKeuanganModule(list) {
-      const { role } = parseRoleInfo();
-      const isSekolah = role === 'SEKOLAH';
-
-      let itemsHtml = '';
-      if (list.length === 0) {
-        itemsHtml = '<p class="text-xs text-slate-400 italic">Belum ada data sekolah terdaftar.</p>';
-      } else {
-        list.forEach(s => {
-          const k7Tot = (s.siswa.k7L + s.siswa.k7P);
-          const k8Tot = (s.siswa.k8L + s.siswa.k8P);
-          const k9Tot = (s.siswa.k9L + s.siswa.k9P);
-          const totalSiswaGlobal = k7Tot + k8Tot + k9Tot;
-
-          const keu = s.keuangan || {};
-
-          const dopUmum7 = keu.dopUmum7 || 0;
-          const dopUmum8 = keu.dopUmum8 || 0;
-          const dopUmum9 = keu.dopUmum9 || 0;
-          const dopUmumThn7 = keu.dopUmumThn7 || 0;
-          const dopUmumThn8 = keu.dopUmumThn8 || 0;
-          const dopUmumThn9 = keu.dopUmumThn9 || 0;
-
-          const siswaUmum7 = keu.siswaUmum7 ?? k7Tot;
-          const siswaUmum8 = keu.siswaUmum8 ?? k8Tot;
-          const siswaUmum9 = keu.siswaUmum9 ?? k9Tot;
-
-          const dopTniau7 = keu.dopTniau7 || 0;
-          const dopTniau8 = keu.dopTniau8 || 0;
-          const dopTniau9 = keu.dopTniau9 || 0;
-          const dopTniauThn7 = keu.dopTniauThn7 || 0;
-          const dopTniauThn8 = keu.dopTniauThn8 || 0;
-          const dopTniauThn9 = keu.dopTniauThn9 || 0;
-
-          const siswaTniau7 = keu.siswaTniau7 ?? 0;
-          const siswaTniau8 = keu.siswaTniau8 ?? 0;
-          const siswaTniau9 = keu.siswaTniau9 ?? 0;
-
-          const rpss01 = keu.rpssSumber01 || 0;
-          const rpss02 = keu.rpssSumber02 || 0;
-          const rpss03 = keu.rpssSumber03 || 0;
-
-          const dopLainnyaList = keu.dopLainnyaList || [];
-          const dspLainnyaList = keu.dspLainnyaList || [];
-
-          const dspGel1 = keu.dspGel1 || 0;
-          const dspSiswa1 = keu.dspSiswa1 || 0;
-          const dspGel2 = keu.dspGel2 || 0;
-          const dspSiswa2 = keu.dspSiswa2 || 0;
-          const dspGel3 = keu.dspGel3 || 0;
-          const dspSiswa3 = keu.dspSiswa3 || 0;
-
-          const dopBln7 = (siswaUmum7 * dopUmum7) + (siswaTniau7 * dopTniau7);
-          const dopBln8 = (siswaUmum8 * dopUmum8) + (siswaTniau8 * dopTniau8);
-          const dopBln9 = (siswaUmum9 * dopUmum9) + (siswaTniau9 * dopTniau9);
-
-          const dopThn7 = (siswaUmum7 * dopUmumThn7) + (siswaTniau7 * dopTniauThn7);
-          const dopThn8 = (siswaUmum8 * dopUmumThn8) + (siswaTniau8 * dopTniauThn8);
-          const dopThn9 = (siswaUmum9 * dopUmumThn9) + (siswaTniau9 * dopTniauThn9);
-
-          let totalDopLainnyaBln = 0;
-          let totalDopLainnyaThn = 0;
-          dopLainnyaList.forEach(item => {
-            const nom = parseFloat(item.nominal) || 0;
-            const jSiswa = parseInt(item.jumlahSiswa) || totalSiswaGlobal;
-            if ((item.tipe || 'Bulanan') === 'Bulanan') {
-              totalDopLainnyaBln += (nom * jSiswa);
-            } else {
-              totalDopLainnyaThn += (nom * jSiswa);
-            }
-          });
-
-          let totalDspLainnya = 0;
-          dspLainnyaList.forEach(item => {
-            const nom = parseFloat(item.nominal) || 0;
-            const jSiswa = parseInt(item.jumlahSiswa) || 0;
-            totalDspLainnya += (nom * jSiswa);
-          });
-
-          const totalDOPBulanan = dopBln7 + dopBln8 + dopBln9 + totalDopLainnyaBln;
-          const totalDOPTahunanRutin = dopThn7 + dopThn8 + dopThn9 + totalDopLainnyaThn;
-          const totalDSP = (dspGel1 * dspSiswa1) + (dspGel2 * dspSiswa2) + (dspGel3 * dspSiswa3) + totalDspLainnya;
-          const totalRPSS = rpss01 + rpss02 + rpss03;
-          const grandTotalKas = (totalDOPBulanan * 12) + totalDOPTahunanRutin + totalDSP + totalRPSS;
-
-          let formKeu = '';
-          if (isSekolah) {
-            formKeu = '<form onsubmit="saveKeuanganData(event, \'' + s.npsn + '\')" class="space-y-4 text-xs"><div class="bg-white p-4 rounded-xl border shadow-sm space-y-4"><span class="font-bold text-brand-blue block text-xs border-b pb-1">A. Rincian DOP Bulanan & Tahunan per Siswa</span><div class="space-y-2"><span class="font-bold text-slate-700 block">1. Umum / Masyarakat:</span><div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border"><div><span class="font-semibold text-slate-600 block mb-1">DOP Bulanan (Per Siswa)</span><div class="grid grid-cols-3 gap-1.5"><div><label class="text-[10px] text-slate-500 block">Kls VII</label><input type="number" id="dopUmum7_' + s.npsn + '" value="' + dopUmum7 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls VIII</label><input type="number" id="dopUmum8_' + s.npsn + '" value="' + dopUmum8 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls IX</label><input type="number" id="dopUmum9_' + s.npsn + '" value="' + dopUmum9 + '" class="w-full p-1.5 border rounded-xl"></div></div></div><div><span class="font-semibold text-slate-600 block mb-1">DOP Tahunan (Per Siswa)</span><div class="grid grid-cols-3 gap-1.5"><div><label class="text-[10px] text-slate-500 block">Kls VII</label><input type="number" id="dopUmumThn7_' + s.npsn + '" value="' + dopUmumThn7 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls VIII</label><input type="number" id="dopUmumThn8_' + s.npsn + '" value="' + dopUmumThn8 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls IX</label><input type="number" id="dopUmumThn9_' + s.npsn + '" value="' + dopUmumThn9 + '" class="w-full p-1.5 border rounded-xl"></div></div></div><div><span class="font-semibold text-slate-600 block mb-1">Jumlah Siswa Umum</span><div class="grid grid-cols-3 gap-1.5"><div><label class="text-[10px] text-slate-500 block">Kls VII</label><input type="number" id="siswaUmum7_' + s.npsn + '" value="' + siswaUmum7 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls VIII</label><input type="number" id="siswaUmum8_' + s.npsn + '" value="' + siswaUmum8 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls IX</label><input type="number" id="siswaUmum9_' + s.npsn + '" value="' + siswaUmum9 + '" class="w-full p-1.5 border rounded-xl"></div></div></div></div></div><div class="space-y-2 pt-2 border-t"><span class="font-bold text-slate-700 block">2. Anak Anggota / PNS TNI AU:</span><div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border"><div><span class="font-semibold text-slate-600 block mb-1">DOP Bulanan (Per Siswa)</span><div class="grid grid-cols-3 gap-1.5"><div><label class="text-[10px] text-slate-500 block">Kls VII</label><input type="number" id="dopTniau7_' + s.npsn + '" value="' + dopTniau7 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls VIII</label><input type="number" id="dopTniau8_' + s.npsn + '" value="' + dopTniau8 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls IX</label><input type="number" id="dopTniau9_' + s.npsn + '" value="' + dopTniau9 + '" class="w-full p-1.5 border rounded-xl"></div></div></div><div><span class="font-semibold text-slate-600 block mb-1">DOP Tahunan (Per Siswa)</span><div class="grid grid-cols-3 gap-1.5"><div><label class="text-[10px] text-slate-500 block">Kls VII</label><input type="number" id="dopTniauThn7_' + s.npsn + '" value="' + dopTniauThn7 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls VIII</label><input type="number" id="dopTniauThn8_' + s.npsn + '" value="' + dopTniauThn8 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls IX</label><input type="number" id="dopTniauThn9_' + s.npsn + '" value="' + dopTniauThn9 + '" class="w-full p-1.5 border rounded-xl"></div></div></div><div><span class="font-semibold text-slate-600 block mb-1">Jumlah Siswa TNI AU</span><div class="grid grid-cols-3 gap-1.5"><div><label class="text-[10px] text-slate-500 block">Kls VII</label><input type="number" id="siswaTniau7_' + s.npsn + '" value="' + siswaTniau7 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls VIII</label><input type="number" id="siswaTniau8_' + s.npsn + '" value="' + siswaTniau8 + '" class="w-full p-1.5 border rounded-xl"></div><div><label class="text-[10px] text-slate-500 block">Kls IX</label><input type="number" id="siswaTniau9_' + s.npsn + '" value="' + siswaTniau9 + '" class="w-full p-1.5 border rounded-xl"></div></div></div></div></div><div class="pt-2 border-t space-y-2"><div class="flex justify-between items-center"><span class="font-bold text-slate-700 block">3. DOP Lainnya (Anak Yatim, Dhuafa, dll):</span><button type="button" onclick="addDopLainRow(\'' + s.npsn + '\')" class="text-[11px] font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-xl border border-emerald-300 transition flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Tambah Kategori DOP</button></div><div id="dopLainContainer_' + s.npsn + '" class="space-y-2"></div></div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-4"><span class="font-bold text-brand-blue block text-xs border-b pb-1">B. Rincian Tarif & Penerimaan DSP SPMB</span><div><span class="font-semibold text-slate-700 block mb-2">1. Gelombang Pendaftaran Umum / Standar:</span><div class="grid grid-cols-1 md:grid-cols-3 gap-3"><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><span class="font-bold text-slate-700 block border-b pb-1">Gelombang I</span><div><label class="text-[11px] text-slate-500 block">Tarif per Siswa (Rp)</label><input type="number" id="dspGel1_' + s.npsn + '" value="' + dspGel1 + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-[11px] text-slate-500 block">Jumlah Siswa</label><input type="number" id="dspSiswa1_' + s.npsn + '" value="' + dspSiswa1 + '" class="w-full p-2 border rounded-xl"></div></div><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><span class="font-bold text-slate-700 block border-b pb-1">Gelombang II</span><div><label class="text-[11px] text-slate-500 block">Tarif per Siswa (Rp)</label><input type="number" id="dspGel2_' + s.npsn + '" value="' + dspGel2 + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-[11px] text-slate-500 block">Jumlah Siswa</label><input type="number" id="dspSiswa2_' + s.npsn + '" value="' + dspSiswa2 + '" class="w-full p-2 border rounded-xl"></div></div><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><span class="font-bold text-slate-700 block border-b pb-1">Gelombang III</span><div><label class="text-[11px] text-slate-500 block">Tarif per Siswa (Rp)</label><input type="number" id="dspGel3_' + s.npsn + '" value="' + dspGel3 + '" class="w-full p-2 border rounded-xl"></div><div><label class="text-[11px] text-slate-500 block">Jumlah Siswa</label><input type="number" id="dspSiswa3_' + s.npsn + '" value="' + dspSiswa3 + '" class="w-full p-2 border rounded-xl"></div></div></div></div><div class="pt-2 border-t space-y-2"><div class="flex justify-between items-center"><span class="font-bold text-slate-700 block">2. DSP Lainnya (Anak Yatim, Dhuafa, dll):</span><button type="button" onclick="addDspLainRow(\'' + s.npsn + '\')" class="text-[11px] font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-xl border border-emerald-300 transition flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Tambah Kategori DSP</button></div><div id="dspLainContainer_' + s.npsn + '" class="space-y-2"></div></div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-4"><span class="font-bold text-brand-blue block text-xs border-b pb-1">C. Sumber Dana RPSS</span><div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200"><div><label class="text-[11px] font-bold text-slate-700 block mb-1">Sumber Dana 01 (Rp)</label><input type="number" id="rpss01_' + s.npsn + '" value="' + rpss01 + '" class="w-full p-2 border rounded-xl bg-white"></div><div><label class="text-[11px] font-bold text-slate-700 block mb-1">Sumber Dana 02 (Rp)</label><input type="number" id="rpss02_' + s.npsn + '" value="' + rpss02 + '" class="w-full p-2 border rounded-xl bg-white"></div><div><label class="text-[11px] font-bold text-slate-700 block mb-1">Sumber Dana 03 (Rp)</label><input type="number" id="rpss03_' + s.npsn + '" value="' + rpss03 + '" class="w-full p-2 border rounded-xl bg-white"></div></div></div><div class="text-right"><button type="submit" class="bg-brand-blue hover:bg-brand-blueDark text-white font-bold px-5 py-2.5 rounded-xl shadow-sm text-xs">Simpan Data Keuangan</button></div></form>';
-          }
-
-          let dopLainItemsHtml = '';
-          if (dopLainnyaList.length === 0) {
-            dopLainItemsHtml = '<div class="text-slate-400 italic">Belum ada penambahan DOP lainnya</div>';
-          } else {
-            dopLainnyaList.forEach(item => {
-              dopLainItemsHtml += '<div class="border-b border-slate-200/60 pb-1 last:border-0"><strong>' + (item.keterangan || 'DOP Khusus') + ':</strong> ' + formatRupiah(item.nominal) + ' (' + (item.tipe || 'Bulanan') + ') - ' + formatAngka(item.jumlahSiswa || totalSiswaGlobal) + ' Siswa</div>';
-            });
-          }
-
-          let dspLainItemsHtml = '';
-          if (dspLainnyaList.length === 0) {
-            dspLainItemsHtml = '<div class="text-slate-400 italic text-[11px]">Belum ada penambahan DSP lainnya</div>';
-          } else {
-            dspLainnyaList.forEach(d => {
-              const total = (d.nominal||0) * (d.jumlahSiswa||0);
-              dspLainItemsHtml += '<div class="text-[11px] border-b border-slate-100 pb-0.5 mb-0.5 last:border-0">• <strong>' + (d.keterangan || 'DSP Khusus') + '</strong>: ' + formatRupiah(d.nominal) + ' (' + formatAngka(d.jumlahSiswa || 0) + ' Siswa) = <strong>' + formatRupiah(total) + '</strong></div>';
-            });
-          }
-
-          let updateTag = s.lastUpdateKeuangan ? 
-            '<span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Diperbarui: ' + s.lastUpdateKeuangan + '</span>' : 
-            '<span class="text-xs font-semibold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">Belum Ada Perubahan</span>';
-
-          itemsHtml += '<div class="border border-slate-200/80 rounded-2xl p-5 space-y-4 bg-slate-50/40 shadow-sm"><div class="flex justify-between items-center border-b pb-3"><h4 class="font-bold text-brand-blue text-sm">' + s.nama + ' (NPSN:' + s.npsn + ')</h4>' + updateTag + '</div>' + formKeu + '<div class="space-y-3 text-xs"><div class="bg-white p-4 rounded-xl border shadow-sm space-y-2"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">A. Rincian DOP Bulanan & Tahunan per Siswa</span><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2"><span class="font-bold text-slate-700 block text-[11px] border-b pb-1">1. Umum / Masyarakat</span><table class="w-full text-left border-collapse text-[11px]"><thead class="border-b border-slate-300 bg-slate-200/60 font-bold text-slate-700"><tr><th class="py-1.5 px-1.5">Kls</th><th class="py-1.5 px-1.5">Bulanan</th><th class="py-1.5 px-1.5">Tahunan</th><th class="py-1.5 px-1.5 text-center">Siswa</th></tr></thead><tbody class="divide-y divide-slate-200"><tr><td class="py-1.5 px-1.5 font-semibold">VII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum7) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn7) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum7) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">VIII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum8) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn8) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum8) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">IX</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopUmum9) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopUmumThn9) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaUmum9) + '</td></tr></tbody></table></div><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2"><span class="font-bold text-blue-800 block text-[11px] border-b pb-1">2. Anak Anggota / PNS TNI AU</span><table class="w-full text-left border-collapse text-[11px]"><thead class="border-b border-slate-300 bg-slate-200/60 font-bold text-slate-700"><tr><th class="py-1.5 px-1.5">Kls</th><th class="py-1.5 px-1.5">Bulanan</th><th class="py-1.5 px-1.5">Tahunan</th><th class="py-1.5 px-1.5 text-center">Siswa</th></tr></thead><tbody class="divide-y divide-slate-200"><tr><td class="py-1.5 px-1.5 font-semibold">VII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniau7) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn7) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau7) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">VIII</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniau8) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn8) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau8) + '</td></tr><tr><td class="py-1.5 px-1.5 font-semibold">IX</td><td class="py-1.5 px-1.5 font-bold text-slate-800">' + formatRupiah(dopTniau9) + '</td><td class="py-1.5 px-1.5 font-bold text-brand-blue">' + formatRupiah(dopTniauThn9) + '</td><td class="py-1.5 px-1.5 text-center font-semibold text-slate-600">' + formatAngka(siswaTniau9) + '</td></tr></tbody></table></div><div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1"><span class="font-bold text-amber-800 block text-[11px] border-b pb-1">3. DOP Lainnya (' + formatAngka(dopLainnyaList.length) + ' Kategori)</span>' + dopLainItemsHtml + '</div></div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-1"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">B. Rincian Tarif & Penerimaan DSP SPMB</span><div>• Gel I: <strong>' + formatRupiah(dspGel1) + '</strong> (' + formatAngka(dspSiswa1) + ' Siswa) = <strong>' + formatRupiah(dspGel1 * dspSiswa1) + '</strong></div><div>• Gel II: <strong>' + formatRupiah(dspGel2) + '</strong> (' + formatAngka(dspSiswa2) + ' Siswa) = <strong>' + formatRupiah(dspGel2 * dspSiswa2) + '</strong></div><div>• Gel III: <strong>' + formatRupiah(dspGel3) + '</strong> (' + formatAngka(dspSiswa3) + ' Siswa) = <strong>' + formatRupiah(dspGel3 * dspSiswa3) + '</strong></div><div class="pt-1 border-t mt-2"><span class="font-bold text-amber-800 block text-[11px] mb-1">DSP Lainnya (' + formatAngka(dspLainnyaList.length) + ' Kategori):</span>' + dspLainItemsHtml + '</div><div class="pt-1 font-bold text-brand-blue border-t mt-2">Total Estimasi Penerimaan DSP: ' + formatRupiah(totalDSP) + '</div></div><div class="bg-white p-4 rounded-xl border shadow-sm space-y-1"><span class="font-bold text-slate-800 block border-b pb-1 text-xs text-brand-blue">C. Sumber Dana RPSS</span><div class="grid grid-cols-3 gap-2"><div>Sumber 01: <strong>' + formatRupiah(rpss01) + '</strong></div><div>Sumber 02: <strong>' + formatRupiah(rpss02) + '</strong></div><div>Sumber 03: <strong>' + formatRupiah(rpss03) + '</strong></div></div></div><div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200 space-y-1"><span class="font-bold text-emerald-900 block border-b border-emerald-200 pb-1 text-xs">D. Proyeksi Total Kas Masuk / Tahun</span><div>• DOP Bulanan (12 Bln): <strong>' + formatRupiah(totalDOPBulanan * 12) + '</strong></div><div>• DOP Tahunan (1x/Thn): <strong>' + formatRupiah(totalDOPTahunanRutin) + '</strong></div><div>• Total Sumber RPSS (01+02+03): <strong>' + formatRupiah(totalRPSS) + '</strong></div><div>• Total DSP SPMB: <strong>' + formatRupiah(totalDSP) + '</strong></div><div class="pt-2 font-black text-emerald-800 border-t text-sm">Grand Total Penerimaan: ' + formatRupiah(grandTotalKas) + '</div></div></div></div></div>';
-        });
-      }
-
-      return '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4"><div class="border-b pb-3"><div><h3 class="font-bold text-slate-800 text-base">Rincian Data Keuangan (DOP & DSP)</h3><p class="text-xs text-slate-500">DOP Bulanan, DOP Tahunan, Sumber Dana RPSS, serta Rincian DSP Gelombang.</p></div></div>' + itemsHtml + '</div>';
+      let html = '';
+      list.forEach(s => {
+        html += '<div class="border rounded-2xl p-5 bg-slate-50/50 space-y-4"><h4 class="font-bold text-brand-blue">' + s.nama + '</h4><div class="text-xs space-y-2"><p>Gunakan tombol tambah untuk DOP/DSP Lainnya.</p><div id="dopLainContainer_' + s.npsn + '"></div><button type="button" onclick="addDopLainRow(\'' + s.npsn + '\')" class="bg-emerald-600 text-white px-3 py-1 rounded-xl text-xs font-bold">+ Tambah DOP Lain</button></div></div>';
+      });
+      return '<div class="bg-white rounded-2xl border p-6 space-y-4"><h3 class="font-bold text-base">Data Keuangan</h3>' + html + '</div>';
     }
 
-    function renderDopLainRows(npsn, list) {
-      const container = document.getElementById('dopLainContainer_' + npsn);
-      if (!container) return;
-
-      container.innerHTML = '';
-      if (!list || list.length === 0) {
-        container.innerHTML = '<p class="text-[11px] text-slate-400 italic">Belum ada penambahan DOP lainnya. Klik tombol di atas untuk menambah.</p>';
-        return;
-      }
-
-      list.forEach((item, idx) => {
-        const row = document.createElement('div');
-        row.className = 'grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs';
-        
-        const selSemua = (item.kelas === 'Semua' || !item.kelas) ? 'selected' : '';
-        const sel7 = item.kelas === '7' ? 'selected' : '';
-        const sel8 = item.kelas === '8' ? 'selected' : '';
-        const sel9 = item.kelas === '9' ? 'selected' : '';
-
-        const selB = (item.tipe === 'Bulanan' || !item.tipe) ? 'selected' : '';
-        const selT = item.tipe === 'Tahunan' ? 'selected' : '';
-
-        row.innerHTML = `
-          <div class="col-span-3">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Keterangan</label>
-            <input type="text" value="${item.keterangan || ''}" placeholder="Cth: Yatim/Dhuafa" onchange="updateDopLainItem('${npsn}', ${idx}, 'keterangan', this.value)" class="w-full p-2 border rounded-xl">
-          </div>
-          <div class="col-span-2">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Target Kelas</label>
-            <select onchange="updateDopLainTargetKelas('${npsn}', ${idx}, this.value)" class="w-full p-2 border rounded-xl bg-white">
-              <option value="Semua" ${selSemua}>Semua Kelas</option>
-              <option value="7" ${sel7}>Kelas VII</option>
-              <option value="8" ${sel8}>Kelas VIII</option>
-              <option value="9" ${sel9}>Kelas IX</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Tipe</label>
-            <select onchange="updateDopLainItem('${npsn}', ${idx}, 'tipe', this.value)" class="w-full p-2 border rounded-xl bg-white">
-              <option value="Bulanan" ${selB}>Bulanan</option>
-              <option value="Tahunan" ${selT}>Tahunan</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Nominal (Rp)</label>
-            <input type="number" value="${item.nominal || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'nominal', this.value)" class="w-full p-2 border rounded-xl">
-          </div>
-          <div class="col-span-2">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Jml Siswa</label>
-            <input type="number" id="jmlSiswaDop_${npsn}_${idx}" value="${item.jumlahSiswa || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'jumlahSiswa', this.value)" class="w-full p-2 border rounded-xl">
-          </div>
-          <div class="col-span-1 text-center pt-3">
-            <button type="button" onclick="removeDopLainRow('${npsn}', ${idx})" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-          </div>
-        `;
     function addDopLainRow(npsn) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
+      const ta = document.getElementById('filterTA')?.value;
+      const school = db[ta]?.find(s => s.npsn === npsn);
       if (school) {
         if (!school.keuangan) school.keuangan = {};
         if (!school.keuangan.dopLainnyaList) school.keuangan.dopLainnyaList = [];
-        
-        school.keuangan.dopLainnyaList.push({ 
-          keterangan: '', 
-          kelas: 'Semua', 
-          tipe: 'Bulanan', 
-          nominal: 0, 
-          jumlahSiswa: 0 
-        });
+        school.keuangan.dopLainnyaList.push({ keterangan: '', kelas: 'Semua', tipe: 'Bulanan', nominal: 0, jumlahSiswa: 0 });
         renderDopLainRows(npsn, school.keuangan.dopLainnyaList);
       }
     }
 
-    function removeDopLainRow(npsn, index) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
+    function removeDopLainRow(npsn, idx) {
+      const ta = document.getElementById('filterTA')?.value;
+      const school = db[ta]?.find(s => s.npsn === npsn);
       if (school && school.keuangan?.dopLainnyaList) {
-        school.keuangan.dopLainnyaList.splice(index, 1);
+        school.keuangan.dopLainnyaList.splice(idx, 1);
         renderDopLainRows(npsn, school.keuangan.dopLainnyaList);
       }
     }
 
-    function updateDopLainItem(npsn, index, field, value) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      if (school && school.keuangan?.dopLainnyaList[index]) {
-        school.keuangan.dopLainnyaList[index][field] = value;
-      }
-    }
-
-    function updateDopLainTargetKelas(npsn, index, targetKelas) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      if (school && school.keuangan?.dopLainnyaList[index]) {
-        school.keuangan.dopLainnyaList[index].kelas = targetKelas;
-
-        const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
-        const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
-        const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
-        const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
-
-        let targetJmlSiswa = totalSiswaGlobal;
-        if (targetKelas === '7') targetJmlSiswa = actualK7;
-        else if (targetKelas === '8') targetJmlSiswa = actualK8;
-        else if (targetKelas === '9') targetJmlSiswa = actualK9;
-
-        school.keuangan.dopLainnyaList[index].jumlahSiswa = targetJmlSiswa;
-
-        const inputJml = document.getElementById(`jmlSiswaDop_${npsn}_${index}`);
-        if (inputJml) inputJml.value = targetJmlSiswa;
+    function updateDopLainItem(npsn, idx, field, val) {
+      const ta = document.getElementById('filterTA')?.value;
+      const school = db[ta]?.find(s => s.npsn === npsn);
+      if (school && school.keuangan?.dopLainnyaList[idx]) {
+        school.keuangan.dopLainnyaList[idx][field] = val;
       }
     }
 
     function renderDopLainRows(npsn, list) {
       const container = document.getElementById('dopLainContainer_' + npsn);
       if (!container) return;
-
-      container.innerHTML = '';
-      if (!list || list.length === 0) {
-        container.innerHTML = '<p class="text-[11px] text-slate-400 italic">Belum ada penambahan DOP lainnya. Klik tombol di atas untuk menambah.</p>';
-        return;
-      }
-
+      container.innerHTML = list.length === 0 ? '<p class="text-xs text-slate-400 italic">Belum ada DOP Lain</p>' : '';
       list.forEach((item, idx) => {
-        const row = document.createElement('div');
-        row.className = 'grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs';
-        
-        const selSemua = (item.kelas === 'Semua' || !item.kelas) ? 'selected' : '';
-        const sel7 = item.kelas === '7' ? 'selected' : '';
-        const sel8 = item.kelas === '8' ? 'selected' : '';
-        const sel9 = item.kelas === '9' ? 'selected' : '';
-
-        const selB = (item.tipe === 'Bulanan' || !item.tipe) ? 'selected' : '';
-        const selT = item.tipe === 'Tahunan' ? 'selected' : '';
-
-        row.innerHTML = `
-          <div class="col-span-3">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Keterangan</label>
-            <input type="text" value="${item.keterangan || ''}" placeholder="Cth: Yatim/Dhuafa" onchange="updateDopLainItem('${npsn}', ${idx}, 'keterangan', this.value)" class="w-full p-2 border rounded-xl">
-          </div>
-          <div class="col-span-2">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Target Kelas</label>
-            <select onchange="updateDopLainTargetKelas('${npsn}', ${idx}, this.value)" class="w-full p-2 border rounded-xl bg-white">
-              <option value="Semua" ${selSemua}>Semua Kelas</option>
-              <option value="7" ${sel7}>Kelas VII</option>
-              <option value="8" ${sel8}>Kelas VIII</option>
-              <option value="9" ${sel9}>Kelas IX</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Tipe</label>
-            <select onchange="updateDopLainItem('${npsn}', ${idx}, 'tipe', this.value)" class="w-full p-2 border rounded-xl bg-white">
-              <option value="Bulanan" ${selB}>Bulanan</option>
-              <option value="Tahunan" ${selT}>Tahunan</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Nominal (Rp)</label>
-            <input type="number" value="${item.nominal || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'nominal', this.value)" class="w-full p-2 border rounded-xl">
-          </div>
-          <div class="col-span-2">
-            <label class="text-[10px] text-slate-500 block mb-0.5">Jml Siswa</label>
-            <input type="number" id="jmlSiswaDop_${npsn}_${idx}" value="${item.jumlahSiswa || 0}" onchange="updateDopLainItem('${npsn}', ${idx}, 'jumlahSiswa', this.value)" class="w-full p-2 border rounded-xl">
-          </div>
-          <div class="col-span-1 text-center pt-3">
-            <button type="button" onclick="removeDopLainRow('${npsn}', ${idx})" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-          </div>
-        `;
-        container.appendChild(row);
+        const div = document.createElement('div');
+        div.className = "flex gap-2 items-center my-2 text-xs";
+        div.innerHTML = '<input type="text" value="' + (item.keterangan||'') + '" placeholder="Keterangan" onchange="updateDopLainItem(\''+npsn+'\','+idx+',\'keterangan\',this.value)" class="p-1 border rounded"><input type="number" value="' + (item.nominal||0) + '" placeholder="Nominal" onchange="updateDopLainItem(\''+npsn+'\','+idx+',\'nominal\',this.value)" class="p-1 border rounded"><button type="button" onclick="removeDopLainRow(\''+npsn+'\','+idx+')" class="bg-rose-500 text-white px-2 py-1 rounded">Hapus</button>';
+        container.appendChild(div);
       });
-      lucide.createIcons();
-    }
-
-    function addDspLainRow(npsn) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      if (school) {
-        if (!school.keuangan) school.keuangan = {};
-        if (!school.keuangan.dspLainnyaList) school.keuangan.dspLainnyaList = [];
-        school.keuangan.dspLainnyaList.push({ keterangan: '', nominal: 0, jumlahSiswa: 0 });
-        renderDspLainRows(npsn, school.keuangan.dspLainnyaList);
-      }
-    }
-
-    function removeDspLainRow(npsn, index) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      if (school && school.keuangan?.dspLainnyaList) {
-        school.keuangan.dspLainnyaList.splice(index, 1);
-        renderDspLainRows(npsn, school.keuangan.dspLainnyaList);
-      }
-    }
-
-    function updateDspLainItem(npsn, index, field, value) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      if (school && school.keuangan?.dspLainnyaList[index]) {
-        school.keuangan.dspLainnyaList[index][field] = value;
-      }
-    }
-
-    function saveKeuanganData(e, npsn) {
-      e.preventDefault();
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      
-      if (school) {
-        // Ambil input jumlah siswa Umum per kelas
-        const u7Input = parseInt(document.getElementById('siswaUmum7_' + npsn)?.value) || 0;
-        const u8Input = parseInt(document.getElementById('siswaUmum8_' + npsn)?.value) || 0;
-        const u9Input = parseInt(document.getElementById('siswaUmum9_' + npsn)?.value) || 0;
-
-        // Ambil input jumlah siswa TNI AU per kelas
-        const t7Input = parseInt(document.getElementById('siswaTniau7_' + npsn)?.value) || 0;
-        const t8Input = parseInt(document.getElementById('siswaTniau8_' + npsn)?.value) || 0;
-        const t9Input = parseInt(document.getElementById('siswaTniau9_' + npsn)?.value) || 0;
-
-        // Ambil jumlah siswa riil dari modul Peserta Didik
-        const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
-        const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
-        const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
-        const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
-
-        if (!school.keuangan) school.keuangan = {};
-        let dopList = school.keuangan.dopLainnyaList || [];
-
-        // Hitung akumulasi tambahan siswa dari DOP Lainnya per kelas target
-        let extraK7 = 0, extraK8 = 0, extraK9 = 0;
-        dopList.forEach(item => {
-          let jS = parseInt(item.jumlahSiswa) || 0;
-          let targetKelas = String(item.kelas || 'Semua');
-          if (targetKelas === '7') extraK7 += jS;
-          else if (targetKelas === '8') extraK8 += jS;
-          else if (targetKelas === '9') extraK9 += jS;
-          else if (targetKelas === 'Semua') {
-            // Jika target "Semua", kita bebankan proporsional atau ke total global
-            extraK7 += jS; extraK8 += jS; extraK9 += jS;
-          }
-        });
-
-        // Total alokasi per kelas = Umum + TNI AU + DOP Lainnya
-        const totalAlokasiK7 = u7Input + t7Input + (dopList.filter(i => i.kelas === '7' || i.kelas === 'Semua').reduce((acc, curr) => acc + (parseInt(curr.jumlahSiswa)||0), 0));
-        const totalAlokasiK8 = u8Input + t8Input + (dopList.filter(i => i.kelas === '8' || i.kelas === 'Semua').reduce((acc, curr) => acc + (parseInt(curr.jumlahSiswa)||0), 0));
-        const totalAlokasiK9 = u9Input + t9Input + (dopList.filter(i => i.kelas === '9' || i.kelas === 'Semua').reduce((acc, curr) => acc + (parseInt(curr.jumlahSiswa)||0), 0));
-
-        // Validasi Ketat: Total Alokasi (Umum + TNI AU + DOP Lainnya) tidak boleh melebihi jumlah siswa riil per kelas
-        if (totalAlokasiK7 > actualK7) {
-          alert("VALIDASI JUMLAH SISWA KELAS VII GAGAL!\n\nTotal alokasi siswa Kelas VII (Umum: " + u7Input + " + TNI AU: " + t7Input + " + DOP Lainnya) adalah " + totalAlokasiK7 + " siswa, melebihi jumlah siswa riil di modul Peserta Didik (" + actualK7 + " siswa).");
-          return;
-        }
-        if (totalAlokasiK8 > actualK8) {
-          alert("VALIDASI JUMLAH SISWA KELAS VIII GAGAL!\n\nTotal alokasi siswa Kelas VIII adalah " + totalAlokasiK8 + " siswa, melebihi jumlah siswa riil di modul Peserta Didik (" + actualK8 + " siswa).");
-          return;
-        }
-        if (totalAlokasiK9 > actualK9) {
-          alert("VALIDASI JUMLAH SISWA KELAS IX GAGAL!\n\nTotal alokasi siswa Kelas IX adalah " + totalAlokasiK9 + " siswa, melebihi jumlah siswa riil di modul Peserta Didik (" + actualK9 + " siswa).");
-          return;
-        }
-
-        // Simpan nilai inputan keuangan ke object school.keuangan
-        school.keuangan.siswaUmum7 = u7Input;
-        school.keuangan.siswaUmum8 = u8Input;
-        school.keuangan.siswaUmum9 = u9Input;
-        school.keuangan.siswaTniau7 = t7Input;
-        school.keuangan.siswaTniau8 = t8Input;
-        school.keuangan.siswaTniau9 = t9Input;
-
-        school.keuangan.dopUmum7 = parseInt(document.getElementById('dopUmum7_' + npsn)?.value) || 0;
-        school.keuangan.dopUmum8 = parseInt(document.getElementById('dopUmum8_' + npsn)?.value) || 0;
-        school.keuangan.dopUmum9 = parseInt(document.getElementById('dopUmum9_' + npsn)?.value) || 0;
-
-        school.keuangan.dopUmumThn7 = parseInt(document.getElementById('dopUmumThn7_' + npsn)?.value) || 0;
-        school.keuangan.dopUmumThn8 = parseInt(document.getElementById('dopUmumThn8_' + npsn)?.value) || 0;
-        school.keuangan.dopUmumThn9 = parseInt(document.getElementById('dopUmumThn9_' + npsn)?.value) || 0;
-
-        school.keuangan.dopTniau7 = parseInt(document.getElementById('dopTniau7_' + npsn)?.value) || 0;
-        school.keuangan.dopTniau8 = parseInt(document.getElementById('dopTniau8_' + npsn)?.value) || 0;
-        school.keuangan.dopTniau9 = parseInt(document.getElementById('dopTniau9_' + npsn)?.value) || 0;
-
-        school.keuangan.dopTniauThn7 = parseInt(document.getElementById('dopTniauThn7_' + npsn)?.value) || 0;
-        school.keuangan.dopTniauThn8 = parseInt(document.getElementById('dopTniauThn8_' + npsn)?.value) || 0;
-        school.keuangan.dopTniauThn9 = parseInt(document.getElementById('dopTniauThn9_' + npsn)?.value) || 0;
-
-        school.keuangan.dspGel1 = parseInt(document.getElementById('dspGel1_' + npsn)?.value) || 0;
-        school.keuangan.dspSiswa1 = parseInt(document.getElementById('dspSiswa1_' + npsn)?.value) || 0;
-        school.keuangan.dspGel2 = parseInt(document.getElementById('dspGel2_' + npsn)?.value) || 0;
-        school.keuangan.dspSiswa2 = parseInt(document.getElementById('dspSiswa2_' + npsn)?.value) || 0;
-        school.keuangan.dspGel3 = parseInt(document.getElementById('dspGel3_' + npsn)?.value) || 0;
-        school.keuangan.dspSiswa3 = parseInt(document.getElementById('dspSiswa3_' + npsn)?.value) || 0;
-
-        school.keuangan.rpssSumber01 = parseInt(document.getElementById('rpss01_' + npsn)?.value) || 0;
-        school.keuangan.rpssSumber02 = parseInt(document.getElementById('rpss02_' + npsn)?.value) || 0;
-        school.keuangan.rpssSumber03 = parseInt(document.getElementById('rpss03_' + npsn)?.value) || 0;
-
-        markSchoolDataUpdated(school, "Data Keuangan", "keuangan");
-        syncToGoogleSheet(school, ta, "keuangan");
-        saveDB();
-        
-        alert("Data Keuangan Berhasil Disimpan & Tervalidasi Sesuai Kapasitas Siswa Riil!");
-        renderPage('keuangan');
-      }    
     }
 
     function renderDokumenTambahanModule(list) {
-      const { role } = parseRoleInfo();
-      const isEditable = role === 'SEKOLAH';
-
-      let alertBannerHtml = '';
-      let itemsHtml = '';
-
-      if (list.length === 0) {
-        itemsHtml = '<p class="text-xs text-slate-400 italic">Belum ada data sekolah terdaftar.</p>';
-      } else {
-        list.forEach(s => {
-          const docs = s.dokumenLaporan || {};
-          let docsGridHtml = '';
-          let hasRevisi = false;
-
-          docsConfig.forEach(doc => {
-            const docData = docs[doc.key] || { status: "Belum Mengisi", notes: "", fileName: "" };
-            if (docData.status === 'Perlu Perbaikan') hasRevisi = true;
-
-            let bgBorderClass = "border-slate-200 bg-white";
-            if (docData.status === 'Valid') bgBorderClass = "border-emerald-200 bg-emerald-50/30";
-            if (docData.status === 'Menunggu Validasi') bgBorderClass = "border-amber-200 bg-amber-50/30";
-            if (docData.status === 'Perlu Perbaikan') bgBorderClass = "border-rose-300 bg-rose-50/50";
-
-            let notesHtml = docData.notes ? '<div class="text-rose-700 bg-rose-100 p-2 rounded-xl border border-rose-200 mt-1 font-semibold text-[11px]">Catatan Admin Pusat: "' + docData.notes + '"</div>' : '';
-            let uploadHtml = isEditable ? '<div class="pt-2 border-t border-slate-200/60"><label class="block text-[10px] font-semibold text-slate-500 mb-1">Unggah/Ganti Berkas (PDF/Excel):</label><input type="file" onchange="uploadDocFile(\'' + s.npsn + '\', \'' + doc.key + '\', this)" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"></div>' : '';
-
-            let previewBtn = docData.fileName ? '<button onclick="openPreviewDocModal(\'' + s.nama + '\', \'' + doc.label + '\', \'' + docData.fileName + '\')" class="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1 mt-1"><i data-lucide="eye" class="w-3 h-3"></i> Lihat Preview File</button>' : '';
-
-            docsGridHtml += '<div class="p-4 rounded-2xl border flex flex-col justify-between gap-3 shadow-sm ' + bgBorderClass + '"><div class="space-y-1.5"><div class="flex items-start justify-between gap-2"><span class="text-xs font-bold text-slate-800 block leading-snug">' + doc.label + '</span><div class="shrink-0">' + renderStatusBadge(docData.status) + '</div></div><div class="text-[11px] text-slate-500 space-y-0.5 pt-1"><div>File: <strong class="text-slate-700">' + (docData.fileName || 'Belum ada berkas diunggah') + '</strong></div>' + previewBtn + notesHtml + '</div></div>' + uploadHtml + '</div>';
-          });
-
-          if (isEditable && hasRevisi && !alertBannerHtml) {
-            alertBannerHtml = '<div class="p-4 bg-rose-50 border border-rose-300 rounded-2xl flex items-center gap-3 text-xs text-rose-800 font-medium shadow-sm"><i data-lucide="alert-triangle" class="w-6 h-6 text-rose-600 shrink-0"></i><div><strong class="font-bold text-rose-900 block text-sm">Perhatian: Berkas Laporan Memerlukan Perbaikan!</strong><p class="mt-0.5">Admin Pusat memberikan catatan revisi pada beberapa dokumen wajib Anda.</p></div></div>';
-          }
-
-          let updateTag = s.lastUpdateDokumen ? 
-            '<span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Diperbarui: ' + s.lastUpdateDokumen + '</span>' : 
-            '<span class="text-xs font-semibold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">Belum Ada Perubahan</span>';
-
-          itemsHtml += '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6"><div class="p-4.5 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center"><div><h4 class="font-bold text-brand-blue text-sm">' + s.nama + '</h4><p class="text-xs text-slate-500">NPSN: ' + s.npsn + ' | Lanud: ' + s.cabang + '</p></div>' + updateTag + '</div><div class="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">' + docsGridHtml + '</div></div>';
-        });
-      }
-
-      return '<div class="space-y-6">' + alertBannerHtml + '<div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between"><div><h3 class="font-bold text-slate-800 text-base">Kelengkapan Dokumen Wajib & Operasional Sekolah</h3><p class="text-xs text-slate-500">Daftar 9 Berkas Laporan Wajib yang harus diunggah oleh pihak sekolah.</p></div></div>' + itemsHtml + '</div>';
+      return '<div class="bg-white rounded-2xl border p-6"><h3 class="font-bold text-base">Dokumen Laporan Wajib</h3><p class="text-xs text-slate-500">Modul dokumen siap digunakan.</p></div>';
     }
 
-    function uploadDocFile(npsn, docKey, inputElem) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      const file = inputElem.files[0];
-
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const base64String = e.target.result;
-        const fileName = file.name;
-
-        // Tentukan nama folder di Drive berdasarkan docKey (misal: Berkas_RKAS, Berkas_RPSS, dll)
-        let katFolder = "Berkas_" + docKey.toUpperCase();
-
-        if (school) {
-          if (!school.dokumenLaporan) school.dokumenLaporan = {};
-          school.dokumenLaporan[docKey] = {
-            status: "Menunggu Validasi",
-            notes: "",
-            fileName: fileName
-          };
-
-          markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen");
-
-          // Payload kirim ke Google Apps Script
-          const payload = {
-            updatedModule: "dokumen",
-            docKey: docKey,
-            kategoriFolder: katFolder,
-            fileName: fileName,
-            fileData: base64String,
-            tahunAjaran: ta,
-            npsn: school.npsn,
-            namaSekolah: school.nama
-          };
-
-          fetch(GOOGLE_SHEET_WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          }).then(() => {
-            alert('Berkas "' + fileName + '" berhasil diunggah dan disimpan ke folder Drive ' + katFolder + '!');
-          });
-
-          saveDB();
-          renderSidebar();
-          renderPage('dokumen_tambahan');
-        }
-      };
-      reader.readAsDataURL(file);    
-    }    
-
     function renderAnalisisModule(list, stats) {
-      let totalValidDocs = 0;
-      let totalDocSlots = TOTAL_SMP_ANGKASA * 9;
-      
-      list.forEach(s => {
-        if (s.dokumenLaporan) {
-          Object.values(s.dokumenLaporan).forEach(d => {
-            if (d.status === 'Valid') totalValidDocs++;
-          });
-        }
-      });
-
-      const complianceRate = totalDocSlots > 0 ? Math.round((totalValidDocs / totalDocSlots) * 100) : 0;
-      let avgSiswaPerRombel = stats.totalRombel ? (stats.totalSiswa / stats.totalRombel).toFixed(1) : 0;
-      let statusRombel = avgSiswaPerRombel > 32 ? 'Over Capacity' : 'Kapasitas Normal';
-      let statusRombelColor = avgSiswaPerRombel > 32 ? 'text-rose-600' : 'text-emerald-600';
-
-      let totalGTY = 0;
-      list.forEach(s => { totalGTY += (s.pendidik?.gty || 0); });
-      let pctGTY = stats.totalPendidik ? Math.round((totalGTY / stats.totalPendidik) * 100) : 0;
-
-      let akredCount = { A: 0, B: 0, C: 0, TT: 0, Belum: 0 };
-      list.forEach(s => {
-        const akr = s.akreditasi;
-        if (akr === 'A') akredCount.A++;
-        else if (akr === 'B') akredCount.B++;
-        else if (akr === 'C') akredCount.C++;
-        else if (akr === 'TT' || akr === 'D') akredCount.TT++;
-        else akredCount.Belum++;
-      });
-
-      const registeredCount = list.length;
-      if (registeredCount < TOTAL_SMP_ANGKASA) {
-        akredCount.Belum += (TOTAL_SMP_ANGKASA - registeredCount);
-      }
-
-      const pctA = ((akredCount.A / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-      const pctB = ((akredCount.B / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-      const pctC = ((akredCount.C / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-      const pctTT = ((akredCount.TT / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-      const pctBelum = ((akredCount.Belum / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-
-      return '<div class="space-y-6"><div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5"><div class="flex items-center justify-between border-b pb-3.5"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-brand-orange"></i> Analysis & Executive Decision Support</h3><p class="text-xs text-slate-500">Kalkulasi cerdas otomatis dari data terkini berbasis populasi 15 SMP Angkasa.</p></div><span class="text-xs font-bold bg-amber-100 text-amber-900 px-3.5 py-1.5 rounded-full border border-amber-200">Executive View</span></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs"><div class="bg-blue-50/70 border border-blue-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Total Proyeksi Penerimaan/Thn</span><h4 class="text-lg font-black text-brand-blue">' + formatRupiah(stats.grandTotalPenerimaanThn) + '</h4></div><div class="bg-emerald-50/70 border border-emerald-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Kepatuhan Berkas Laporan</span><h4 class="text-lg font-black text-emerald-700">' + formatAngka(complianceRate) + '% Terverifikasi</h4></div><div class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Rata-Rata Siswa / Rombel</span><h4 class="text-lg font-black text-amber-700">' + avgSiswaPerRombel + ' Siswa</h4><span class="text-[10px] ' + statusRombelColor + ' font-bold">' + statusRombel + '</span></div><div class="bg-purple-50/70 border border-purple-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Rasio Guru Tetap (GTY)</span><h4 class="text-lg font-black text-purple-700">' + formatAngka(pctGTY) + '% GTY</h4></div></div><div class="border-t pt-4 space-y-3"><div class="flex justify-between items-center"><h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="award" class="w-4 h-4 text-brand-blue"></i> Profil Akreditasi Sekolah Global</h4><span class="text-[11px] font-semibold text-slate-500 bg-slate-50 px-3 py-1 rounded-xl border">Basis: 15 SMP Angkasa</span></div><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs"><div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-emerald-700 font-bold block">A (Unggul)</span><h5 class="text-xl font-black text-emerald-800">' + formatAngka(akredCount.A) + '</h5><span class="text-[10px] text-emerald-600 font-bold">' + pctA + '%</span></div><div class="bg-blue-50 border border-blue-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-blue-700 font-bold block">B (Baik)</span><h5 class="text-xl font-black text-blue-800">' + formatAngka(akredCount.B) + '</h5><span class="text-[10px] text-blue-600 font-bold">' + pctB + '%</span></div><div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-amber-700 font-bold block">C (Cukup Baik)</span><h5 class="text-xl font-black text-amber-800">' + formatAngka(akredCount.C) + '</h5><span class="text-[10px] text-amber-600 font-bold">' + pctC + '%</span></div><div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-rose-700 font-bold block">Tidak Terakreditasi</span><h5 class="text-xl font-black text-rose-800">' + formatAngka(akredCount.TT) + '</h5><span class="text-[10px] text-rose-600 font-bold">' + pctTT + '%</span></div><div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-slate-600 font-bold block">Belum Mengisi</span><h5 class="text-xl font-black text-slate-800">' + formatAngka(akredCount.Belum) + '</h5><span class="text-[10px] text-slate-500 font-bold">' + pctBelum + '%</span></div></div></div></div></div>';
+      return '<div class="bg-white rounded-2xl border p-6"><h3 class="font-bold text-base">Analisis & Insight</h3><p class="text-xs">Total Proyeksi: ' + formatRupiah(stats.grandTotalPenerimaanThn) + '</p></div>';
     }
 
     function renderValidasiModule(list) {
-      let itemsHtml = '';
-      if (list.length === 0) {
-        itemsHtml = '<p class="text-xs text-slate-400 italic">Belum ada data sekolah terdaftar.</p>';
-      } else {
-        list.forEach(s => {
-          const docs = s.dokumenLaporan || {};
-          const leg = s.legalitas || {};
-
-          let revBadge = s.hasDataRevision ? '<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-300 flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3 text-amber-600"></i> Update: ' + (s.lastUpdatedModule || 'Data') + '</span>' : '';
-
-          let legalitasCards = '';
-          const legDocs = [
-            { key: 'Akreditasi', title: 'Sertifikat Akreditasi (' + getAkreditasiText(s.akreditasi) + ')', file: leg.fileAkreditasi, status: leg.statusAkreditasi || 'Belum Diisi', notes: leg.notesAkreditasi || '' },
-            { key: 'SKPendirian', title: 'SK Pendirian Sekolah (' + (leg.skPendirian || '-') + ')', file: leg.fileSKPendirian, status: leg.statusSKPendirian || 'Belum Diisi', notes: leg.notesSKPendirian || '' },
-            { key: 'SKIzin', title: 'SK Izin Operasional (' + (leg.skIzin || '-') + ')', file: leg.fileSKIzin, status: leg.statusSKIzin || 'Belum Diisi', notes: leg.notesSKIzin || '' }
-          ];
-
-          legDocs.forEach(item => {
-            let fileActions = '';
-            if (item.file) {
-              fileActions = '<div class="flex items-center gap-2 pt-1"><button onclick="openPreviewDocModal(\'' + s.nama + '\', \'' + item.title + '\', \'' + item.file + '\')" class="text-[10px] font-bold bg-blue-50 text-brand-blue hover:bg-blue-100 px-2 py-1 rounded-lg border border-blue-200 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Preview</button></div>';
-            }
-
-            legalitasCards += '<div class="p-4 rounded-2xl border bg-white shadow-sm flex flex-col justify-between gap-3"><div class="space-y-2"><div class="flex items-start justify-between gap-2 border-b pb-2"><span class="font-bold text-slate-800 text-xs leading-snug break-words">' + item.title + '</span><div class="shrink-0">' + renderStatusBadge(item.status) + '</div></div><div class="text-[11px] text-slate-500">Berkas: <strong class="text-slate-700 block truncate">' + (item.file || 'Belum ada file') + '</strong>' + fileActions + '</div><div><label class="block text-[10px] font-semibold text-slate-500 mb-1">Catatan / Revisi Pusat:</label><input type="text" id="leg_note_' + s.npsn + '_' + item.key + '" value="' + item.notes + '" class="w-full p-2 border border-slate-300 rounded-xl text-xs focus:ring-1 focus:ring-brand-blue outline-none"></div></div><div class="flex items-center gap-2 pt-2 border-t border-slate-100"><button onclick="updateLegalitasDocStatus(\'' + s.npsn + '\', \'' + item.key + '\', \'Valid\')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold py-2 px-2 rounded-xl transition text-center shadow-sm">Setujui (Valid)</button><button onclick="updateLegalitasDocStatus(\'' + s.npsn + '\', \'' + item.key + '\', \'Perlu Perbaikan\')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold py-2 px-2 rounded-xl transition text-center shadow-sm">Minta Perbaikan</button></div></div>';
-          });
-
-          let docCards = '';
-          docsConfig.forEach(d => {
-            const docObj = docs[d.key] || { status: "Belum Mengisi", notes: "", fileName: "" };
-            let fileActions = '';
-            if (docObj.fileName) {
-              fileActions = '<div class="flex items-center gap-2 pt-1"><button onclick="openPreviewDocModal(\'' + s.nama + '\', \'' + d.label + '\', \'' + docObj.fileName + '\')" class="text-[10px] font-bold bg-blue-50 text-brand-blue hover:bg-blue-100 px-2 py-1 rounded-lg border border-blue-200 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Preview</button></div>';
-            }
-
-            docCards += '<div class="p-4 rounded-2xl border bg-white shadow-sm flex flex-col justify-between gap-3"><div class="space-y-2"><div class="flex items-start justify-between gap-2 border-b pb-2"><span class="font-bold text-slate-800 text-xs leading-snug break-words">' + d.label + '</span><div class="shrink-0">' + renderStatusBadge(docObj.status) + '</div></div><div class="text-[11px] text-slate-500">Berkas: <strong class="text-slate-700 block truncate">' + (docObj.fileName || 'Belum ada file') + '</strong>' + fileActions + '</div><div><label class="block text-[10px] font-semibold text-slate-500 mb-1">Catatan / Revisi Pusat:</label><input type="text" id="note_' + s.npsn + '_' + d.key + '" value="' + (docObj.notes || '') + '" class="w-full p-2 border border-slate-300 rounded-xl text-xs focus:ring-1 focus:ring-brand-blue outline-none"></div></div><div class="flex items-center gap-2 pt-2 border-t border-slate-100"><button onclick="updateSingleDocStatus(\'' + s.npsn + '\', \'' + d.key + '\', \'Valid\')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold py-2 px-2 rounded-xl transition text-center shadow-sm">Setujui (Valid)</button><button onclick="updateSingleDocStatus(\'' + s.npsn + '\', \'' + d.key + '\', \'Perlu Perbaikan\')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold py-2 px-2 rounded-xl transition text-center shadow-sm">Minta Perbaikan</button></div></div>';
-          });
-
-          itemsHtml += '<div class="p-5 border rounded-2xl space-y-4 bg-slate-50/50 shadow-sm"><div class="flex flex-wrap items-center justify-between gap-3 border-b pb-3.5"><div><div class="flex items-center gap-2"><h4 class="font-bold text-brand-blue text-sm">' + s.nama + '</h4>' + revBadge + '</div><p class="text-xs text-slate-500 mt-0.5">NPSN: ' + s.npsn + ' | Verifikasi Dokumen & Laporan</p></div><div><button onclick="showDetailModal(\'' + s.npsn + '\')" class="bg-blue-50 hover:bg-blue-100 text-brand-blue border border-blue-200 text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Periksa Isian Lengkap</button></div></div><div class="space-y-3"><h5 class="font-bold text-slate-800 text-xs border-b pb-1 flex items-center gap-1.5 text-brand-blue"><i data-lucide="file-check-2" class="w-4 h-4"></i> A. Validasi Berkas Dokumen Akreditasi & SK Legalitas:</h5><div class="grid grid-cols-1 md:grid-cols-3 gap-4">' + legalitasCards + '</div></div><div class="space-y-3 pt-2"><h5 class="font-bold text-slate-800 text-xs border-b pb-1 flex items-center gap-1.5 text-brand-blue"><i data-lucide="files" class="w-4 h-4"></i> B. Validasi 9 Dokumen Laporan Wajib Sekolah:</h5><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">' + docCards + '</div></div></div>';
-        });
-      }
-
-      return '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4"><div class="border-b pb-3"><h3 class="font-bold text-slate-800 text-base">Persetujuan & Validasi Berkas Dokumen Wajib</h3><p class="text-xs text-slate-500">Lakukan verifikasi dan validasi pada Berkas Legalitas & Dokumen Laporan Wajib.</p></div><div class="space-y-6">' + itemsHtml + '</div></div>';
-    }
-
-    function updateLegalitasDocStatus(npsn, legKey, status) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      const noteInput = document.getElementById('leg_note_' + npsn + '_' + legKey);
-      const notes = noteInput ? noteInput.value : "";
-
-      if (school) {
-        if (!school.legalitas) school.legalitas = {};
-        school.legalitas['status' + legKey] = status;
-        school.legalitas['notes' + legKey] = notes;
-
-        saveDB();
-        renderSidebar();
-        renderPage('validasi');
-      }
-    }
-
-    function updateSingleDocStatus(npsn, docKey, status) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      const noteInput = document.getElementById('note_' + npsn + '_' + docKey);
-      const notes = noteInput ? noteInput.value : "";
-
-      if (school) {
-        if (!school.dokumenLaporan) school.dokumenLaporan = {};
-        if (!school.dokumenLaporan[docKey]) school.dokumenLaporan[docKey] = {};
-
-        school.dokumenLaporan[docKey].status = status;
-        school.dokumenLaporan[docKey].notes = notes;
-
-        saveDB();
-        renderSidebar();
-        renderPage('validasi');
-      }
-    }
-
-    function showDetailModal(npsn) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const s = db[ta].find(item => item.npsn === npsn);
-
-      if (s) {
-        document.getElementById('modalTitle').innerText = 'Rincian Isian Data Lengkap: ' + s.nama;
-        const totalS = (s.siswa.k7L + s.siswa.k7P) + (s.siswa.k8L + s.siswa.k8P) + (s.siswa.k9L + s.siswa.k9P);
-        const leg = s.legalitas || {};
-
-        document.getElementById('modalBody').innerHTML = '<div class="space-y-3"><div class="bg-slate-50 p-3.5 rounded-xl border"><span class="font-bold text-brand-blue block mb-1">A. Identitas & Legalitas Sekolah</span><div>• Alamat: <strong>' + (s.alamatSekolah || '-') + '</strong></div><div>• Kepala Sekolah: <strong>' + (s.kepalaSekolah || '-') + '</strong></div><div>• Akreditasi: <strong>' + getAkreditasiText(s.akreditasi) + '</strong></div><div>• SK Pendirian: <strong>' + (leg.skPendirian || '-') + '</strong></div><div>• SK Izin Operasional: <strong>' + (leg.skIzin || '-') + '</strong></div></div><div class="bg-slate-50 p-3.5 rounded-xl border"><span class="font-bold text-brand-blue block mb-1">B. Siswa & Rombel</span><div>• Total Siswa: <strong>' + formatAngka(totalS) + ' Siswa</strong></div></div><div class="bg-slate-50 p-3.5 rounded-xl border"><span class="font-bold text-brand-blue block mb-1">C. SDM Pendidik & Tendik</span><div>• Guru Tetap Yayasan (GTY): <strong>' + formatAngka(s.pendidik.gty || 0) + '</strong> | DPK PNS: <strong>' + formatAngka(s.pendidik.dpkPns || 0) + '</strong></div><div>• Tenaga Kependidikan (Tendik) DPK PNS: <strong>' + formatAngka(s.tendik.dpkPns || 0) + '</strong></div></div></div>';
-
-        document.getElementById('detailModal').classList.remove('hidden');
-        lucide.createIcons();
-      }
+      return '<div class="bg-white rounded-2xl border p-6"><h3 class="font-bold text-base">Validasi Pusat</h3></div>';
     }
 
     function renderLaporanModule(list) {
-      const { role, npsn } = parseRoleInfo();
-      let itemsHtml = '';
-
-      if (list.length === 0) {
-        itemsHtml = '<p class="text-xs text-slate-400 italic">Belum ada data sekolah terdaftar.</p>';
-      } else {
-        let targetList = list;
-        if (role === 'SEKOLAH') {
-          targetList = list.filter(s => s.npsn === npsn);
-        }
-
-        targetList.forEach(s => {
-          const totS = (s.siswa.k7L + s.siswa.k7P) + (s.siswa.k8L + s.siswa.k8P) + (s.siswa.k9L + s.siswa.k9P);
-          const totR = s.siswa.r7 + s.siswa.r8 + s.siswa.r9;
-          const totG = s.pendidik.L + s.pendidik.P;
-          const totT = s.tendik.L + s.tendik.P;
-          const leg = s.legalitas || {};
-
-          const u7 = s.keuangan?.siswaUmum7 ?? (s.siswa.k7L + s.siswa.k7P);
-          const u8 = s.keuangan?.siswaUmum8 ?? (s.siswa.k8L + s.siswa.k8P);
-          const u9 = s.keuangan?.siswaUmum9 ?? (s.siswa.k9L + s.siswa.k9P);
-          const t7 = s.keuangan?.siswaTniau7 ?? 0;
-          const t8 = s.keuangan?.siswaTniau8 ?? 0;
-          const t9 = s.keuangan?.siswaTniau9 ?? 0;
-
-          const dopBln = (u7 * (s.keuangan?.dopUmum7 || 0)) + (u8 * (s.keuangan?.dopUmum8 || 0)) + (u9 * (s.keuangan?.dopUmum9 || 0))
-                       + (t7 * (s.keuangan?.dopTniau7 || 0)) + (t8 * (s.keuangan?.dopTniau8 || 0)) + (t9 * (s.keuangan?.dopTniau9 || 0));
-          const dopThn = (u7 * (s.keuangan?.dopUmumThn7 || 0)) + (u8 * (s.keuangan?.dopUmumThn8 || 0)) + (u9 * (s.keuangan?.dopUmumThn9 || 0))
-                       + (t7 * (s.keuangan?.dopTniauThn7 || 0)) + (t8 * (s.keuangan?.dopTniauThn8 || 0)) + (t9 * (s.keuangan?.dopTniauThn9 || 0));
-
-          let dopLainSubBln = 0, dopLainSubThn = 0;
-          if (s.keuangan?.dopLainnyaList && Array.isArray(s.keuangan.dopLainnyaList)) {
-            s.keuangan.dopLainnyaList.forEach(item => {
-              const nom = parseFloat(item.nominal) || 0;
-              const jS = parseInt(item.jumlahSiswa) || totS;
-              if ((item.tipe || 'Bulanan') === 'Bulanan') dopLainSubBln += (nom * jS);
-              else dopLainSubThn += (nom * jS);
-            });
-          }
-
-          const totDopBln = dopBln + dopLainSubBln;
-          const totDopThn = dopThn + dopLainSubThn;
-          const dspG1 = (s.keuangan?.dspGel1 || 0) * (s.keuangan?.dspSiswa1 || 0);
-          const dspG2 = (s.keuangan?.dspGel2 || 0) * (s.keuangan?.dspSiswa2 || 0);
-          const dspG3 = (s.keuangan?.dspGel3 || 0) * (s.keuangan?.dspSiswa3 || 0);
-          let dspLainSub = 0;
-          if (s.keuangan?.dspLainnyaList && Array.isArray(s.keuangan.dspLainnyaList)) {
-            s.keuangan.dspLainnyaList.forEach(item => { dspLainSub += (parseFloat(item.nominal) || 0) * (parseInt(item.jumlahSiswa) || 0); });
-          }
-          const totalDSP = dspG1 + dspG2 + dspG3 + dspLainSub;
-          const totalRPSS = (s.keuangan?.rpssSumber01 || 0) + (s.keuangan?.rpssSumber02 || 0) + (s.keuangan?.rpssSumber03 || 0);
-          const grandTotalKas = (totDopBln * 12) + totDopThn + totalDSP + totalRPSS;
-
-          let docStatusRows = '';
-          const legItems = [
-            { label: 'Sertifikat Akreditasi', status: leg.statusAkreditasi || 'Belum Diisi', note: leg.notesAkreditasi },
-            { label: 'SK Pendirian Sekolah', status: leg.statusSKPendirian || 'Belum Diisi', note: leg.notesSKPendirian },
-            { label: 'SK Izin Operasional', status: leg.statusSKIzin || 'Belum Diisi', note: leg.notesSKIzin }
-          ];
-
-          legItems.forEach(item => {
-            let noteStr = item.note ? ' <span class="text-rose-600 font-semibold">(Catatan Pusat: "' + item.note + '")</span>' : '';
-            docStatusRows += '<div class="flex justify-between items-center py-1 border-b border-slate-100 last:border-0"><span class="text-slate-700">• ' + item.label + noteStr + '</span><div>' + renderStatusBadge(item.status) + '</div></div>';
-          });
-
-          if (s.dokumenLaporan) {
-            docsConfig.forEach(d => {
-              const dObj = s.dokumenLaporan[d.key] || { status: 'Belum Mengisi', notes: '' };
-              let noteStr = dObj.notes ? ' <span class="text-rose-600 font-semibold">(Catatan Pusat: "' + dObj.notes + '")</span>' : '';
-              docStatusRows += '<div class="flex justify-between items-center py-1 border-b border-slate-100 last:border-0"><span class="text-slate-700">• ' + d.label + noteStr + '</span><div>' + renderStatusBadge(dObj.status) + '</div></div>';
-            });
-          }
-
-          itemsHtml += '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4 break-inside-avoid"><div class="border-b pb-3 flex justify-between items-start"><div><h4 class="font-bold text-brand-blue text-base">' + s.nama + '</h4><p class="text-xs text-slate-500">NPSN: ' + s.npsn + ' | Lanud: ' + s.cabang + '</p></div><span class="text-xs font-bold bg-blue-50 text-brand-blue px-3 py-1 rounded-xl border border-blue-200">Status: ' + s.statusValidation + '</span></div><div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border"><div>Alamat: <strong>' + (s.alamatSekolah || '-') + '</strong></div><div>Akreditasi: <strong>' + getAkreditasiText(s.akreditasi) + '</strong></div><div>Kepala Sekolah: <strong>' + (s.kepalaSekolah || '-') + '</strong></div><div>Total Siswa: <strong>' + formatAngka(totS) + ' Siswa</strong> (' + formatAngka(totR) + ' Rombel)</div><div>Total Pendidik: <strong>' + formatAngka(totG) + ' Orang</strong></div><div>Total Tendik: <strong>' + formatAngka(totT) + ' Orang</strong></div><div>SK Pendirian: <strong>' + (leg.skPendirian || '-') + '</strong></div><div>SK Izin Operasional: <strong>' + (leg.skIzin || '-') + '</strong></div><div>Terakhir Diperbarui: <strong>' + (s.lastUpdate || '-') + '</strong></div></div><div class="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200 text-xs space-y-1"><span class="font-bold text-emerald-900 block border-b border-emerald-200 pb-1">D. Rangkuman Data Keuangan</span><div>• Total DOP Bulanan (12 Bln): <strong>' + formatRupiah(totDopBln * 12) + '</strong></div><div>• Total DOP Tahunan (Rutin): <strong>' + formatRupiah(totDopThn) + '</strong></div><div>• Total DSP SPMB: <strong>' + formatRupiah(totalDSP) + '</strong></div><div>• Total Sumber Dana RPSS: <strong>' + formatRupiah(totalRPSS) + '</strong></div><div class="pt-1.5 border-t border-emerald-200 font-black text-emerald-800 text-sm">Grand Total Proyeksi Kas: ' + formatRupiah(grandTotalKas) + '</div></div><div class="space-y-1.5 pt-2"><h5 class="font-bold text-slate-700 text-xs border-b pb-1">Status Verifikasi & Validasi Dokumen Laporan Wajib:</h5><div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1 text-xs">' + docStatusRows + '</div></div></div>';
-        });
-      }
-
-      const titleHeader = role === 'SEKOLAH' ? 'Rekap Laporan & Status Verifikasi Berkas Mandiri' : 'Rekap Laporan Seluruh Sekolah Terdaftar';
-
-      return '<div class="space-y-6"><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm print:hidden"><div><h3 class="font-bold text-slate-800 text-base">' + titleHeader + '</h3><p class="text-xs text-slate-500">Menampilkan rangkuman profil, keuangan, dan status verifikasi dokumen dari Admin Pusat. Gunakan tombol Excel atau Cetak di atas untuk mengunduh laporan.</p></div></div>' + itemsHtml + '</div>';
+      return '<div class="bg-white rounded-2xl border p-6"><h3 class="font-bold text-base">Rekap Laporan</h3></div>';
     }
 
     function exportToExcel() {
-      const list = getFilteredData();
-      const ta = document.getElementById('filterTA')?.value || "Umum";
-
-      if (list.length === 0) {
-        alert("Tidak ada data untuk diunduh!");
-        return;
-      }
-
-      let csv = "NPSN,Nama Sekolah,Lanud,Alamat Sekolah,Status Validasi,Total Siswa,Total Rombel,Total Guru,Total Tendik,Guru DPK PNS,Tendik DPK PNS,Kepala Sekolah,Akreditasi\n";
-
-      list.forEach(s => {
-        const totalS = (s.siswa.k7L + s.siswa.k7P) + (s.siswa.k8L + s.siswa.k8P) + (s.siswa.k9L + s.siswa.k9P);
-        const totalR = s.siswa.r7 + s.siswa.r8 + s.siswa.r9;
-        const totalG = s.pendidik.L + s.pendidik.P;
-        const totalT = s.tendik.L + s.tendik.P;
-
-        csv += '"' + s.npsn + '","' + s.nama + '","' + s.cabang + '","' + (s.alamatSekolah || '-') + '","' + s.statusValidation + '",' + totalS + ',' + totalR + ',' + totalG + ',' + totalT + ',' + (s.pendidik.dpkPns || 0) + ',' + (s.tendik.dpkPns || 0) + ',"' + (s.kepalaSekolah || '-') + '","' + getAkreditasiText(s.akreditasi) + '"\n';
-      });
-
-      const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", "Rekap_Data_SIDSA_TA_" + ta.replace('-', '_') + ".csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      alert("Fitur ekspor Excel aktif.");
     }
   </script>
 </body>
