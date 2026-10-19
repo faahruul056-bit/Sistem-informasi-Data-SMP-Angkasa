@@ -578,24 +578,46 @@
     }
 
     window.onload = function() {
-      // Ambil data lokal yang sudah ada terlebih dahulu
-      let localDb = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
+      // Tampilkan indikator loading atau pastikan session valid dulu
+      if (!currentSession || !currentSession.role || !currentSession.user) {
+        window.location.href = 'login.html';
+        return;
+      }
 
-      // Tarik database terbaru dari Google Sheets (Cloud)
+      // TARIK 100% MURNI DARI CLOUD GOOGLE SHEETS (TANPA MENGGABUNGKAN LOCAL STORAGE LAMA)
       fetch(GOOGLE_SHEET_WEB_APP_URL + "?action=getAllData")
         .then(res => res.json())
         .then(resData => {
           if (resData.status === "success" && resData.db) {
-            // Gabungkan key tahun ajaran dari cloud dan local agar TA baru dari browser lain tidak hilang
-            const mergedDb = { ...resData.db, ...localDb };
-            db = mergedDb;
-            saveDB(); // Simpan hasil gabungan ke localStorage
+            // Gunakan murni data dari Google Sheets sebagai database utama
+            db = resData.db;
+            localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
+          } else {
+            // Fallback jika cloud kosong
+            db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
           }
         })
         .catch(err => {
-          console.warn("Gagal mengambil data cloud, menggunakan database lokal:", err);
+          console.warn("Gagal mengambil data cloud, menggunakan cache lokal:", err);
+          db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
         })
         .finally(() => {
+          // Validasi khusus akun sekolah agar datanya tidak tertukar dengan sekolah lain
+          const { role, npsn } = parseRoleInfo();
+          if (role === 'SEKOLAH') {
+            const taList = Object.keys(db);
+            if (taList.length > 0) {
+              taList.forEach(ta => {
+                if (!Array.isArray(db[ta])) db[ta] = [];
+                let foundSchool = db[ta].find(s => s.npsn === npsn);
+                if (!foundSchool) {
+                  // Jika di cloud belum ada untuk NPSN ini, buatkan default khusus sekolah tersebut
+                  db[ta].push(createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang));
+                }
+              });
+            }
+          }
+
           renderHeaderControls();
           renderSidebar();
           renderFilterControls();
@@ -754,6 +776,11 @@
       const taSelect = document.getElementById('filterTA');
       const ta = taSelect?.value || taList[0] || "";
 
+    function getFilteredData() {
+      const taList = Object.keys(db).sort().reverse();
+      const taSelect = document.getElementById('filterTA');
+      const ta = taSelect?.value || taList[0] || "";
+
       if (!ta || !db[ta]) {
         return [];
       }
@@ -762,13 +789,14 @@
       const { role, npsn } = parseRoleInfo();
 
       if (role === 'SEKOLAH') {
+        // Cari persis berdasarkan NPSN yang sedang login di session
         let schoolData = list.find(s => s.npsn === npsn);
         if (!schoolData) {
           schoolData = createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang);
           list.push(schoolData);
           saveDB();
         }
-        list = [schoolData];
+        list = [schoolData]; // Hanya tampilkan data sekolah yang bersangkutan saja
       } else {
         list = list.filter(s => s.npsn !== "PUSAT" && s.npsn !== "-");
       }
