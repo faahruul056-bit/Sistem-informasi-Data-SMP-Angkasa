@@ -245,7 +245,7 @@
         siswa: schoolObj.siswa,
         pendidik: schoolObj.pendidik,
         tendik: schoolObj.tendik,
-        keuangan: schoolObj.keuangan, // <--- WAJIB ADA AGAR SPREADSHEET TIDAK NOL
+        keuangan: schoolObj.keuangan,
         grandTotalKas: grandTotalKas,
         dokumenLaporan: schoolObj.dokumenLaporan
       };
@@ -276,12 +276,11 @@
       if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
       if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
 
-      // PERBAIKAN DI SINI: Sertakan moduleKey agar terkirim ke Google Sheet
       const taList = Object.keys(db).sort().reverse();
       const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
       syncToGoogleSheet(school, currentTA, moduleKey); 
     }
-    // FUNGSI SINKRONISASI AKUN (BERDIRI SENDIRI DI LUAR)
+
     function syncAccountToSheet(accountObj) {
       const payload = {
         updatedModule: "akun",
@@ -426,24 +425,6 @@
       localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
     }
 
-    function markSchoolDataUpdated(school, moduleName, moduleKey) {
-      const timeStr = new Date().toLocaleString('id-ID');
-      school.lastUpdate = timeStr;
-      school.hasDataRevision = true;
-      school.lastUpdatedModule = moduleName || "Data Sekolah";
-
-      if (moduleKey === 'identitas') school.lastUpdateIdentitas = timeStr;
-      if (moduleKey === 'siswa') school.lastUpdateSiswa = timeStr;
-      if (moduleKey === 'pendidik') school.lastUpdatePendidik = timeStr;
-      if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
-      if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
-
-      // Sinkronisasi otomatis ke Google Sheet
-      const taList = Object.keys(db).sort().reverse();
-      const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
-      syncToGoogleSheet(school, currentTA);
-    }
-
     function resetDataDemo() {
       const selectedTA = document.getElementById('filterTA')?.value;
       
@@ -578,26 +559,21 @@
     }
 
     window.onload = function() {
-      // Validasi sesi terlebih dahulu
       if (!currentSession || !currentSession.role || !currentSession.user) {
         window.location.href = 'login.html';
         return;
       }
 
-      // Ambil cache lokal terlebih dahulu
       db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
 
-      // Coba tarik data terbaru & data akun dari Google Sheets di background
       fetch(GOOGLE_SHEET_WEB_APP_URL + "?action=getAllData")
         .then(res => res.json())
         .then(resData => {
           if (resData && resData.status === "success") {
-            // Sinkronisasi database sekolah
             if (resData.db && Object.keys(resData.db).length > 0) {
               db = resData.db;
               localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
             }
-            // SINKRONISASI AKUN DARI CLOUD KE LOCALSTORAGE ADMIN
             if (resData.akun && Array.isArray(resData.akun) && resData.akun.length > 0) {
               localStorage.setItem('sidsa_users_v10', JSON.stringify(resData.akun));
             }
@@ -607,7 +583,6 @@
           console.warn("Menggunakan cache lokal karena cloud sedang offline:", err);
         })
         .finally(() => {
-          // Validasi khusus akun sekolah
           const { role, npsn } = parseRoleInfo();
           if (role === 'SEKOLAH') {
             const taList = Object.keys(db);
@@ -742,7 +717,6 @@
 
       saveDB();
 
-      // SINKRONISASI KE GOOGLE SHEET BAHWA ADA TAHUN AJARAN BARU
       const payload = {
         updatedModule: "tahun_ajaran",
         tahunAjaranBaru: newTA,
@@ -757,7 +731,6 @@
         body: JSON.stringify(payload)
       });
 
-      // Sinkronisasi data sekolah awal di TA baru ke Google Sheets
       db[newTA].forEach(s => {
         syncToGoogleSheet(s, newTA, "identitas");
       });
@@ -799,14 +772,13 @@
       const { role, npsn } = parseRoleInfo();
 
       if (role === 'SEKOLAH') {
-        // Cari persis berdasarkan NPSN yang sedang login di session
         let schoolData = list.find(s => s.npsn === npsn);
         if (!schoolData) {
           schoolData = createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang);
           list.push(schoolData);
           saveDB();
         }
-        list = [schoolData]; // Hanya tampilkan data sekolah yang bersangkutan saja
+        list = [schoolData];
       } else {
         list = list.filter(s => s.npsn !== "PUSAT" && s.npsn !== "-");
       }
@@ -1105,7 +1077,6 @@
         currentSession.pass = newPass;
         localStorage.setItem('sidsa_session_v10', JSON.stringify(currentSession));
 
-        // Sinkronisasi pembaruan password akun ke Google Sheet (Tab Data_Akun)
         syncAccountToSheet(usersDB[userIndex]);
 
         alert("Kata Sandi Berhasil Diperbarui!");
@@ -1181,121 +1152,113 @@
       return '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">' + alertBannerHtml + '<div class="flex justify-between items-center"><h3 class="font-bold text-slate-800 text-base">Identitas & Legalitas Sekolah</h3></div><div class="space-y-6">' + itemsHtml + '</div></div>';
     }
 
-function uploadLegalitasFile(npsn, fieldKey, inputElem) {
-  const taList = Object.keys(db).sort().reverse();
-  const ta = document.getElementById('filterTA')?.value || taList[0];
-  const school = db[ta].find(s => s.npsn === npsn);
-  const file = inputElem.files[0];
+    function uploadLegalitasFile(npsn, fieldKey, inputElem) {
+      const taList = Object.keys(db).sort().reverse();
+      const ta = document.getElementById('filterTA')?.value || taList[0];
+      const school = db[ta].find(s => s.npsn === npsn);
+      const file = inputElem.files[0];
 
-  if (!file) return;
+      if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64String = e.target.result;
-    const fileName = file.name;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64String = e.target.result;
+        const fileName = file.name;
 
-    // Tentukan kategori folder berdasarkan jenis file legalitas
-    let katFolder = "Berkas_Legalitas_Lainnya";
-    if (fieldKey === 'fileAkreditasi') katFolder = "Berkas_Akreditasi";
-    else if (fieldKey === 'fileSKPendirian') katFolder = "Berkas_SK_Pendirian";
-    else if (fieldKey === 'fileSKIzin') katFolder = "Berkas_SK_Izin_Operasional";
+        let katFolder = "Berkas_Legalitas_Lainnya";
+        if (fieldKey === 'fileAkreditasi') katFolder = "Berkas_Akreditasi";
+        else if (fieldKey === 'fileSKPendirian') katFolder = "Berkas_SK_Pendirian";
+        else if (fieldKey === 'fileSKIzin') katFolder = "Berkas_SK_Izin_Operasional";
 
-    if (school) {
-      // Ambil data teks lain yang sedang diketik user di form agar tidak ikut ke-reset
-      const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
-      if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
-      
-      const inputKepsek = document.getElementById('id_kepsek_' + npsn)?.value;
-      if (inputKepsek !== undefined) school.kepalaSekolah = inputKepsek;
-      
-      const inputAkred = document.getElementById('id_akreditasi_' + npsn)?.value;
-      if (inputAkred !== undefined) school.akreditasi = inputAkred;
-      
-      const inputThnAkred = document.getElementById('id_thnakreditasi_' + npsn)?.value;
-      if (inputThnAkred !== undefined) school.tahunAkreditasi = inputThnAkred;
+        if (school) {
+          const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
+          if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
+          
+          const inputKepsek = document.getElementById('id_kepsek_' + npsn)?.value;
+          if (inputKepsek !== undefined) school.kepalaSekolah = inputKepsek;
+          
+          const inputAkred = document.getElementById('id_akreditasi_' + npsn)?.value;
+          if (inputAkred !== undefined) school.akreditasi = inputAkred;
+          
+          const inputThnAkred = document.getElementById('id_thnakreditasi_' + npsn)?.value;
+          if (inputThnAkred !== undefined) school.tahunAkreditasi = inputThnAkred;
 
-      if (!school.legalitas) school.legalitas = {};
+          if (!school.legalitas) school.legalitas = {};
 
-      // AMBIL JUGA NOMOR & TANGGAL SK AGAR TIDAK KETIK RE-SET SAAT UPLOAD FILE
-      school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn)?.value || school.legalitas.skPendirian || "-";
-      school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn)?.value || school.legalitas.tglSK || "-";
-      school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || school.legalitas.skIzin || "-";
-      school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || school.legalitas.tglSKIzin || "-";
+          school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn)?.value || school.legalitas.skPendirian || "-";
+          school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn)?.value || school.legalitas.tglSK || "-";
+          school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || school.legalitas.skIzin || "-";
+          school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || school.legalitas.tglSKIzin || "-";
 
-      // Simpan nama file ke properti legalitas yang sesuai
-      school.legalitas[fieldKey] = fileName;
+          school.legalitas[fieldKey] = fileName;
 
-      if (fieldKey === 'fileAkreditasi') { school.legalitas.statusAkreditasi = "Menunggu Validasi"; school.legalitas.notesAkreditasi = ""; }
-      if (fieldKey === 'fileSKPendirian') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
-      if (fieldKey === 'fileSKIzin') { school.legalitas.statusSKIzin = "Menunggu Validasi"; school.legalitas.notesSKIzin = ""; }
+          if (fieldKey === 'fileAkreditasi') { school.legalitas.statusAkreditasi = "Menunggu Validasi"; school.legalitas.notesAkreditasi = ""; }
+          if (fieldKey === 'fileSKPendirian') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
+          if (fieldKey === 'fileSKIzin') { school.legalitas.statusSKIzin = "Menunggu Validasi"; school.legalitas.notesSKIzin = ""; }
 
-      markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
+          markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
 
-      // Payload kirim ke Google Apps Script
-      const payload = {
-        updatedModule: "identitas",
-        kategoriFolder: katFolder,
-        fileName: fileName,
-        fileData: base64String,
-        tahunAjaran: ta,
-        npsn: school.npsn,
-        namaSekolah: school.nama,
-        cabang: school.cabang,
-        alamatSekolah: school.alamatSekolah,
-        kepalaSekolah: school.kepalaSekolah,
-        akreditasi: school.akreditasi,
-        tahunAkreditasi: school.tahunAkreditasi,
-        legalitas: school.legalitas
+          const payload = {
+            updatedModule: "identitas",
+            kategoriFolder: katFolder,
+            fileName: fileName,
+            fileData: base64String,
+            tahunAjaran: ta,
+            npsn: school.npsn,
+            namaSekolah: school.nama,
+            cabang: school.cabang,
+            alamatSekolah: school.alamatSekolah,
+            kepalaSekolah: school.kepalaSekolah,
+            akreditasi: school.akreditasi,
+            tahunAkreditasi: school.tahunAkreditasi,
+            legalitas: school.legalitas
+          };
+
+          fetch(GOOGLE_SHEET_WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          }).then(() => {
+            alert('Berkas "' + fileName + '" Berhasil Diunggah & Masuk ke Drive Pusat!');
+          });
+
+          saveDB();
+          renderSidebar();
+          renderPage('identitas');
+        }
       };
-
-      fetch(GOOGLE_SHEET_WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      }).then(() => {
-        alert('Berkas "' + fileName + '" Berhasil Diunggah & Masuk ke Drive Pusat!');
-      });
-
-      saveDB();
-      renderSidebar();
-      renderPage('identitas');
-    }
-  };
-  reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
     }
 
-function saveIdentitasData(e, npsn) {
-  e.preventDefault();
-  const taList = Object.keys(db).sort().reverse();
-  const ta = document.getElementById('filterTA')?.value || taList[0];
-  const school = db[ta].find(s => s.npsn === npsn);
-  
-  if (school) {
-    const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
-    if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
+    function saveIdentitasData(e, npsn) {
+      e.preventDefault();
+      const taList = Object.keys(db).sort().reverse();
+      const ta = document.getElementById('filterTA')?.value || taList[0];
+      const school = db[ta].find(s => s.npsn === npsn);
+      
+      if (school) {
+        const inputAlamat = document.getElementById('id_alamat_' + npsn)?.value;
+        if (inputAlamat !== undefined) school.alamatSekolah = inputAlamat;
 
-    school.kepalaSekolah = document.getElementById('id_kepsek_' + npsn).value;
-    school.akreditasi = document.getElementById('id_akreditasi_' + npsn).value;
-    school.tahunAkreditasi = document.getElementById('id_thnakreditasi_' + npsn).value;
+        school.kepalaSekolah = document.getElementById('id_kepsek_' + npsn).value;
+        school.akreditasi = document.getElementById('id_akreditasi_' + npsn).value;
+        school.tahunAkreditasi = document.getElementById('id_thnakreditasi_' + npsn).value;
 
-    if (!school.legalitas) school.legalitas = {};
-    
-    // AMBIL DATA SK PENDIRIAN & SK IZIN DARI INPUT FORM DENGAN BENAR
-    school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn)?.value || "-";
-    school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn)?.value || "-";
-    school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || "-";
-    school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || "-";
+        if (!school.legalitas) school.legalitas = {};
+        
+        school.legalitas.skPendirian = document.getElementById('id_sk_' + npsn)?.value || "-";
+        school.legalitas.tglSK = document.getElementById('id_tglsk_' + npsn)?.value || "-";
+        school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || "-";
+        school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || "-";
 
-    markSchoolDataUpdated(school, "Identitas & Legalitas", "identitas");
-    
-    // PASTIKAN SINKRONISASI KE GOOGLE SHEET IKUT DIPANGGIL DI SINI
-    syncToGoogleSheet(school, ta, "identitas"); 
+        markSchoolDataUpdated(school, "Identitas & Legalitas", "identitas");
+        syncToGoogleSheet(school, ta, "identitas"); 
 
-    saveDB();
-    alert("Data Identitas & Legalitas Sekolah Berhasil Disimpan & Disinkronkan!");
-    renderPage('identitas');
-  }
+        saveDB();
+        alert("Data Identitas & Legalitas Sekolah Berhasil Disimpan & Disinkronkan!");
+        renderPage('identitas');
+      }
     }
 
     function renderPesertaDidikModule(list) {
@@ -1351,7 +1314,7 @@ function saveIdentitasData(e, npsn) {
         school.siswa.r9 = parseInt(document.getElementById('r9_' + npsn).value) || 0;
 
         markSchoolDataUpdated(school, "Peserta Didik & Rombel", "siswa");
-        syncToGoogleSheet(school, ta, "siswa"); //
+        syncToGoogleSheet(school, ta, "siswa"); 
         saveDB();
         alert("Data Peserta Didik Berhasil Diperbarui!");
         renderPage('peserta_didik');
@@ -1435,7 +1398,7 @@ function saveIdentitasData(e, npsn) {
         school.tendik.dpkPns = tDpkPns;
 
         markSchoolDataUpdated(school, "Pendidik & Tendik", "pendidik");
-        syncToGoogleSheet(school, ta, "pendidik"); //
+        syncToGoogleSheet(school, ta, "pendidik"); 
         saveDB();
         alert("Data Pendidik & Tendik Berhasil Diperbarui!");
         renderPage('pendidik_tendik');
@@ -1714,6 +1677,7 @@ function saveIdentitasData(e, npsn) {
         school.keuangan.dspLainnyaList[index][field] = value;
       }
     }
+
     function renderDspLainRows(npsn, list) {
       const container = document.getElementById('dspLainContainer_' + npsn);
       if (!container) return;
@@ -1747,6 +1711,8 @@ function saveIdentitasData(e, npsn) {
         container.appendChild(row);
       });
       lucide.createIcons();
+    }
+
     function saveKeuanganData(e, npsn) {
       e.preventDefault();
       const taList = Object.keys(db).sort().reverse();
@@ -1754,47 +1720,27 @@ function saveIdentitasData(e, npsn) {
       const school = db[ta].find(s => s.npsn === npsn);
       
       if (school) {
-        // Ambil input jumlah siswa Umum per kelas
         const u7Input = parseInt(document.getElementById('siswaUmum7_' + npsn)?.value) || 0;
         const u8Input = parseInt(document.getElementById('siswaUmum8_' + npsn)?.value) || 0;
         const u9Input = parseInt(document.getElementById('siswaUmum9_' + npsn)?.value) || 0;
 
-        // Ambil input jumlah siswa TNI AU per kelas
         const t7Input = parseInt(document.getElementById('siswaTniau7_' + npsn)?.value) || 0;
         const t8Input = parseInt(document.getElementById('siswaTniau8_' + npsn)?.value) || 0;
         const t9Input = parseInt(document.getElementById('siswaTniau9_' + npsn)?.value) || 0;
 
-        // Ambil jumlah siswa riil dari modul Peserta Didik
         const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
         const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
         const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
-        const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
 
         if (!school.keuangan) school.keuangan = {};
         let dopList = school.keuangan.dopLainnyaList || [];
 
-        // Hitung akumulasi tambahan siswa dari DOP Lainnya per kelas target
-        let extraK7 = 0, extraK8 = 0, extraK9 = 0;
-        dopList.forEach(item => {
-          let jS = parseInt(item.jumlahSiswa) || 0;
-          let targetKelas = String(item.kelas || 'Semua');
-          if (targetKelas === '7') extraK7 += jS;
-          else if (targetKelas === '8') extraK8 += jS;
-          else if (targetKelas === '9') extraK9 += jS;
-          else if (targetKelas === 'Semua') {
-            // Jika target "Semua", kita bebankan proporsional atau ke total global
-            extraK7 += jS; extraK8 += jS; extraK9 += jS;
-          }
-        });
-
-        // Total alokasi per kelas = Umum + TNI AU + DOP Lainnya
         const totalAlokasiK7 = u7Input + t7Input + (dopList.filter(i => i.kelas === '7' || i.kelas === 'Semua').reduce((acc, curr) => acc + (parseInt(curr.jumlahSiswa)||0), 0));
         const totalAlokasiK8 = u8Input + t8Input + (dopList.filter(i => i.kelas === '8' || i.kelas === 'Semua').reduce((acc, curr) => acc + (parseInt(curr.jumlahSiswa)||0), 0));
         const totalAlokasiK9 = u9Input + t9Input + (dopList.filter(i => i.kelas === '9' || i.kelas === 'Semua').reduce((acc, curr) => acc + (parseInt(curr.jumlahSiswa)||0), 0));
 
-        // Validasi Ketat: Total Alokasi (Umum + TNI AU + DOP Lainnya) tidak boleh melebihi jumlah siswa riil per kelas
         if (totalAlokasiK7 > actualK7) {
-          alert("VALIDASI JUMLAH SISWA KELAS VII GAGAL!\n\nTotal alokasi siswa Kelas VII (Umum: " + u7Input + " + TNI AU: " + t7Input + " + DOP Lainnya) adalah " + totalAlokasiK7 + " siswa, melebihi jumlah siswa riil di modul Peserta Didik (" + actualK7 + " siswa).");
+          alert("VALIDASI JUMLAH SISWA KELAS VII GAGAL!\n\nTotal alokasi siswa Kelas VII adalah " + totalAlokasiK7 + " siswa, melebihi jumlah siswa riil di modul Peserta Didik (" + actualK7 + " siswa).");
           return;
         }
         if (totalAlokasiK8 > actualK8) {
@@ -1806,7 +1752,6 @@ function saveIdentitasData(e, npsn) {
           return;
         }
 
-        // Simpan nilai inputan keuangan ke object school.keuangan
         school.keuangan.siswaUmum7 = u7Input;
         school.keuangan.siswaUmum8 = u8Input;
         school.keuangan.siswaUmum9 = u9Input;
@@ -1910,7 +1855,6 @@ function saveIdentitasData(e, npsn) {
         const base64String = e.target.result;
         const fileName = file.name;
 
-        // Tentukan nama folder di Drive berdasarkan docKey (misal: Berkas_RKAS, Berkas_RPSS, dll)
         let katFolder = "Berkas_" + docKey.toUpperCase();
 
         if (school) {
@@ -1923,7 +1867,6 @@ function saveIdentitasData(e, npsn) {
 
           markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen");
 
-          // Payload kirim ke Google Apps Script
           const payload = {
             updatedModule: "dokumen",
             docKey: docKey,
