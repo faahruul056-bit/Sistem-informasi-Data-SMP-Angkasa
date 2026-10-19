@@ -1651,7 +1651,6 @@ function saveIdentitasData(e, npsn) {
         if (!school.keuangan) school.keuangan = {};
         if (!school.keuangan.dopLainnyaList) school.keuangan.dopLainnyaList = [];
         
-        // Default awal jumlah siswa diset 0 agar bersih (tidak membawa angka 7)
         school.keuangan.dopLainnyaList.push({ 
           keterangan: '', 
           kelas: 'Semua', 
@@ -1689,13 +1688,11 @@ function saveIdentitasData(e, npsn) {
       if (school && school.keuangan?.dopLainnyaList[index]) {
         school.keuangan.dopLainnyaList[index].kelas = targetKelas;
 
-        // Ambil data siswa riil spesifik per kelas dari modul Peserta Didik
         const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
         const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
         const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
         const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
 
-        // Tentukan jumlah siswa secara otomatis berdasarkan pilihan target kelas
         let targetJmlSiswa = totalSiswaGlobal;
         if (targetKelas === '7') targetJmlSiswa = actualK7;
         else if (targetKelas === '8') targetJmlSiswa = actualK8;
@@ -1703,7 +1700,6 @@ function saveIdentitasData(e, npsn) {
 
         school.keuangan.dopLainnyaList[index].jumlahSiswa = targetJmlSiswa;
 
-        // Perbarui tampilan input jumlah siswa secara langsung di layar
         const inputJml = document.getElementById(`jmlSiswaDop_${npsn}_${index}`);
         if (inputJml) inputJml.value = targetJmlSiswa;
       }
