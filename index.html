@@ -600,7 +600,6 @@
           console.warn("Menggunakan cache lokal karena cloud sedang offline:", err);
         })
         .finally(() => {
-          // Validasi khusus akun sekolah
           const { role, npsn } = parseRoleInfo();
           if (role === 'SEKOLAH') {
             const taList = Object.keys(db);
@@ -609,7 +608,8 @@
             } else {
               taList.forEach(ta => {
                 if (!Array.isArray(db[ta])) db[ta] = [];
-                let foundSchool = db[ta].find(s => s.npsn === npsn);
+                // Bersihkan spasi & jadikan string untuk pencocokan aman
+                let foundSchool = db[ta].find(s => String(s.npsn).trim() === String(npsn).trim());
                 if (!foundSchool) {
                   db[ta].push(createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang));
                 }
@@ -617,11 +617,11 @@
             }
           }
 
-          // Pastikan semua komponen UI dirender secara aman
           renderHeaderControls();
           renderSidebar();
           renderFilterControls();
           
+          // Pastikan Tahun Ajaran terpilih otomatis agar tidak kosong
           const taSelect = document.getElementById('filterTA');
           if (taSelect && !taSelect.value) {
             const taKeys = Object.keys(db).sort().reverse();
@@ -793,14 +793,16 @@
       const { role, npsn } = parseRoleInfo();
 
       if (role === 'SEKOLAH') {
-        // Cari persis berdasarkan NPSN yang sedang login di session
-        let schoolData = list.find(s => s.npsn === npsn);
+        // Normalisasi string NPSN dengan .trim() agar tidak gampang Meleset
+        let cleanNpsn = String(npsn).trim();
+        let schoolData = list.find(s => String(s.npsn).trim() === cleanNpsn);
+        
         if (!schoolData) {
           schoolData = createDefaultSchoolObject(currentSession.npsn, currentSession.nama, currentSession.cabang);
           list.push(schoolData);
           saveDB();
         }
-        list = [schoolData]; // Hanya tampilkan data sekolah yang bersangkutan saja
+        list = [schoolData]; 
       } else {
         list = list.filter(s => s.npsn !== "PUSAT" && s.npsn !== "-");
       }
