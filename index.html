@@ -1613,36 +1613,6 @@ function saveIdentitasData(e, npsn) {
             <button type="button" onclick="removeDopLainRow('${npsn}', ${idx})" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `;
-      function updateDopLainTargetKelas(npsn, index, targetKelas) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      if (school && school.keuangan?.dopLainnyaList[index]) {
-        school.keuangan.dopLainnyaList[index].kelas = targetKelas;
-
-        // Ambil data siswa riil per kelas
-        const actualK7 = (school.siswa?.k7L || 0) + (school.siswa?.k7P || 0);
-        const actualK8 = (school.siswa?.k8L || 0) + (school.siswa?.k8P || 0);
-        const actualK9 = (school.siswa?.k9L || 0) + (school.siswa?.k9P || 0);
-        const totalSiswaGlobal = actualK7 + actualK8 + actualK9;
-
-        // Otomatis set jumlah siswa berdasarkan kelas yang dipilih
-        let targetJmlSiswa = totalSiswaGlobal;
-        if (targetKelas === '7') targetJmlSiswa = actualK7;
-        else if (targetKelas === '8') targetJmlSiswa = actualK8;
-        else if (targetKelas === '9') targetJmlSiswa = actualK9;
-
-        school.keuangan.dopLainnyaList[index].jumlahSiswa = targetJmlSiswa;
-
-        // Update tampilan input jumlah siswa secara langsung di layar
-        const inputJml = document.getElementById(`jmlSiswaDop_${npsn}_${index}`);
-        if (inputJml) inputJml.value = targetJmlSiswa;
-      }
-    }
-        container.appendChild(row);
-      });
-      lucide.createIcons();    }
-
     function addDopLainRow(npsn) {
       const taList = Object.keys(db).sort().reverse();
       const ta = document.getElementById('filterTA')?.value || taList[0];
