@@ -1714,7 +1714,39 @@ function saveIdentitasData(e, npsn) {
         school.keuangan.dspLainnyaList[index][field] = value;
       }
     }
+    function renderDspLainRows(npsn, list) {
+      const container = document.getElementById('dspLainContainer_' + npsn);
+      if (!container) return;
 
+      container.innerHTML = '';
+      if (!list || list.length === 0) {
+        container.innerHTML = '<p class="text-[11px] text-slate-400 italic">Belum ada penambahan DSP lainnya.</p>';
+        return;
+      }
+
+      list.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs';
+        row.innerHTML = `
+          <div class="col-span-5">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Keterangan</label>
+            <input type="text" value="${item.keterangan || ''}" placeholder="Cth: Beasiswa/Cicilan" onchange="updateDspLainItem('${npsn}', ${idx}, 'keterangan', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-3">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Nominal (Rp)</label>
+            <input type="number" value="${item.nominal || 0}" onchange="updateDspLainItem('${npsn}', ${idx}, 'nominal', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-3">
+            <label class="text-[10px] text-slate-500 block mb-0.5">Jml Siswa</label>
+            <input type="number" value="${item.jumlahSiswa || 0}" onchange="updateDspLainItem('${npsn}', ${idx}, 'jumlahSiswa', this.value)" class="w-full p-2 border rounded-xl">
+          </div>
+          <div class="col-span-1 text-center pt-3">
+            <button type="button" onclick="removeDspLainRow('${npsn}', ${idx})" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+      lucide.createIcons();
     function saveKeuanganData(e, npsn) {
       e.preventDefault();
       const taList = Object.keys(db).sort().reverse();
