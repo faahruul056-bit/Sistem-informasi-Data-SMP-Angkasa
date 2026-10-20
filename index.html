@@ -800,11 +800,13 @@
       let totalDOPTahunRutin = 0;
       let totalDSPPenerimaan = 0;
 
+      let analysisList = [];
+
       list.forEach(s => {
         const sSiswa = (s.siswa.k7L + s.siswa.k7P) + (s.siswa.k8L + s.siswa.k8P) + (s.siswa.k9L + s.siswa.k9P);
         const sRombel = s.siswa.r7 + s.siswa.r8 + s.siswa.r9;
-        const sPendidik = s.pendidik.L + s.pendidik.P;
-        const sTendik = s.tendik.L + s.tendik.P;
+        const sPendidik = (s.pendidik.L || 0) + (s.pendidik.P || 0);
+        const sTendik = (s.tendik.L || 0) + (s.tendik.P || 0);
 
         const u7 = s.keuangan?.siswaUmum7 ?? (s.siswa.k7L + s.siswa.k7P);
         const u8 = s.keuangan?.siswaUmum8 ?? (s.siswa.k8L + s.siswa.k8P);
@@ -814,8 +816,8 @@
         const t8 = s.keuangan?.siswaTniau8 ?? 0;
         const t9 = s.keuangan?.siswaTniau9 ?? 0;
 
-        const dopBln = (u7 * (s.keuangan?.dopUmum7 || 0)) + (u8 * (s.keuangan?.dopUmum8 || 0)) + (u9 * (s.keuangan?.dopUmum9 || 0))
-                     + (t7 * (s.keuangan?.dopTniau7 || 0)) + (t8 * (s.keuangan?.dopTniau8 || 0)) + (t9 * (s.keuangan?.dopTniau9 || 0));
+        const dopUmumBlnTotal = (u7 * (s.keuangan?.dopUmum7 || 0)) + (u8 * (s.keuangan?.dopUmum8 || 0)) + (u9 * (s.keuangan?.dopUmum9 || 0));
+        const dopTniBlnTotal = (t7 * (s.keuangan?.dopTniau7 || 0)) + (t8 * (s.keuangan?.dopTniau8 || 0)) + (t9 * (s.keuangan?.dopTniau9 || 0));
 
         const dopThn = (u7 * (s.keuangan?.dopUmumThn7 || 0)) + (u8 * (s.keuangan?.dopUmumThn8 || 0)) + (u9 * (s.keuangan?.dopUmumThn9 || 0))
                      + (t7 * (s.keuangan?.dopTniauThn7 || 0)) + (t8 * (s.keuangan?.dopTniauThn8 || 0)) + (t9 * (s.keuangan?.dopTniauThn9 || 0));
@@ -826,11 +828,8 @@
           s.keuangan.dopLainnyaList.forEach(item => {
             const nom = parseFloat(item.nominal) || 0;
             const jSiswa = parseInt(item.jumlahSiswa) || sSiswa;
-            if ((item.tipe || 'Bulanan') === 'Bulanan') {
-              dopLainSubtotalBln += (nom * jSiswa);
-            } else {
-              dopLainSubtotalThn += (nom * jSiswa);
-            }
+            if ((item.tipe || 'Bulanan') === 'Bulanan') dopLainSubtotalBln += (nom * jSiswa);
+            else dopLainSubtotalThn += (nom * jSiswa);
           });
         }
 
@@ -843,15 +842,28 @@
             dspLainSubtotal += (parseFloat(item.nominal) || 0) * (parseInt(item.jumlahSiswa) || 0);
           });
         }
+        const totalDSP = dspG1 + dspG2 + dspG3 + dspLainSubtotal;
+        const totalRPSS = (s.keuangan?.rpssSumber01 || 0) + (s.keuangan?.rpssSumber02 || 0) + (s.keuangan?.rpssSumber03 || 0);
 
         totalSiswa += sSiswa;
         totalRombel += sRombel;
         totalPendidik += sPendidik;
         totalTendik += sTendik;
 
-        totalDOPBulan += (dopBln + dopLainSubtotalBln);
+        totalDOPBulan += (dopUmumBlnTotal + dopTniBlnTotal + dopLainSubtotalBln);
         totalDOPTahunRutin += (dopThn + dopLainSubtotalThn);
-        totalDSPPenerimaan += (dspG1 + dspG2 + dspG3 + dspLainSubtotal);
+        totalDSPPenerimaan += totalDSP;
+
+        analysisList.push({
+          nama: s.nama,
+          npsn: s.npsn,
+          dopUmum: dopUmumBlnTotal,
+          dopTni: dopTniBlnTotal,
+          dsp: totalDSP,
+          rpss: totalRPSS,
+          pendidik: sPendidik,
+          tendik: sTendik
+        });
       });
 
       const grandTotalPenerimaanThn = (totalDOPBulan * 12) + totalDOPTahunRutin + totalDSPPenerimaan;
@@ -859,7 +871,8 @@
       return {
         totalSekolah, totalSiswa, totalRombel, totalPendidik, totalTendik, totalDOPBulan,
         totalDOPTahunRutin, totalDSPPenerimaan, grandTotalPenerimaanThn,
-        rasioGuruSiswa: totalPendidik ? (totalSiswa / totalPendidik).toFixed(1) : 0
+        rasioGuruSiswa: totalPendidik ? (totalSiswa / totalPendidik).toFixed(1) : 0,
+        analysisList
       };
     }
 
@@ -1008,7 +1021,7 @@
           });
         }
 
-        container.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-blue-50 text-brand-blue rounded-xl"><i data-lucide="school" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Sekolah Mengisi</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSekolah) + ' / ' + formatAngka(TOTAL_SMP_ANGKASA) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Peserta Didik</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSiswa) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="user-check" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Rasio Guru : Siswa</p><h3 class="text-xl font-black text-slate-800">1 : ' + stats.rasioGuruSiswa + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total DOP Bulanan</p><h3 class="text-lg font-black text-slate-800">' + formatRupiah(stats.totalDOPBulan) + '</h3></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-blue"></i> Distribusi Siswa per Sekolah</h4><canvas id="chartSiswa" class="max-h-64"></canvas></div><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4 text-brand-orange"></i> Komposisi SDM (Guru vs Tendik)</h4><canvas id="chartSDM" class="max-h-64"></canvas></div></div><div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"><div class="p-4.5 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center"><h4 class="font-bold text-slate-800 text-sm">Ringkasan Data Sekolah</h4><span class="text-xs font-semibold text-slate-500 bg-white px-3 py-1 rounded-xl border border-slate-200">Tahun Ajaran ' + selectedTA + '</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200"><tr><th class="p-3.5">NPSN & Nama Sekolah</th><th class="p-3.5">Nama Lanud</th><th class="p-3.5 text-center">Total Siswa</th><th class="p-3.5 text-center">Rombel</th><th class="p-3.5 text-center">Pendidik</th><th class="p-3.5 text-center">Status Data & Perubahan</th></tr></thead><tbody class="divide-y divide-slate-100">' + tableRows + '</tbody></table></div></div>';
+        container.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-5 gap-4"><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-blue-50 text-brand-blue rounded-xl"><i data-lucide="school" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Sekolah Mengisi</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSekolah) + ' / ' + formatAngka(TOTAL_SMP_ANGKASA) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Peserta Didik</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalSiswa) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-violet-50 text-violet-600 rounded-xl"><i data-lucide="graduation-cap" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Pendidik (Guru)</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalPendidik) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-cyan-50 text-cyan-600 rounded-xl"><i data-lucide="briefcase" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Total Tendik</p><h3 class="text-xl font-black text-slate-800">' + formatAngka(stats.totalTendik) + '</h3></div></div><div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3.5"><div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="user-check" class="w-6 h-6"></i></div><div><p class="text-xs text-slate-500 font-semibold">Rasio Guru : Siswa</p><h3 class="text-xl font-black text-slate-800">1 : ' + stats.rasioGuruSiswa + '</h3></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-blue"></i> Distribusi Siswa per Sekolah</h4><canvas id="chartSiswa" class="max-h-64"></canvas></div><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm"><h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4 text-brand-orange"></i> Komposisi SDM (Guru vs Tendik)</h4><canvas id="chartSDM" class="max-h-64"></canvas></div></div><div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"><div class="p-4.5 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center"><h4 class="font-bold text-slate-800 text-sm">Ringkasan Data Sekolah</h4><span class="text-xs font-semibold text-slate-500 bg-white px-3 py-1 rounded-xl border border-slate-200">Tahun Ajaran ' + selectedTA + '</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200"><tr><th class="p-3.5">NPSN & Nama Sekolah</th><th class="p-3.5">Nama Lanud</th><th class="p-3.5 text-center">Total Siswa</th><th class="p-3.5 text-center">Rombel</th><th class="p-3.5 text-center">Pendidik</th><th class="p-3.5 text-center">Status Data & Perubahan</th></tr></thead><tbody class="divide-y divide-slate-100">' + tableRows + '</tbody></table></div></div>';
 
         setTimeout(() => {
           const ctx1 = document.getElementById('chartSiswa');
@@ -1956,35 +1969,39 @@
 
       const complianceRate = totalDocSlots > 0 ? Math.round((totalValidDocs / totalDocSlots) * 100) : 0;
       let avgSiswaPerRombel = stats.totalRombel ? (stats.totalSiswa / stats.totalRombel).toFixed(1) : 0;
-      let statusRombel = avgSiswaPerRombel > 32 ? 'Over Capacity' : 'Kapasitas Normal';
-      let statusRombelColor = avgSiswaPerRombel > 32 ? 'text-rose-600' : 'text-emerald-600';
 
-      let totalGTY = 0;
-      list.forEach(s => { totalGTY += (s.pendidik?.gty || 0); });
-      let pctGTY = stats.totalPendidik ? Math.round((totalGTY / stats.totalPendidik) * 100) : 0;
-
-      let akredCount = { A: 0, B: 0, C: 0, TT: 0, Belum: 0 };
-      list.forEach(s => {
-        const akr = s.akreditasi;
-        if (akr === 'A') akredCount.A++;
-        else if (akr === 'B') akredCount.B++;
-        else if (akr === 'C') akredCount.C++;
-        else if (akr === 'TT' || akr === 'D') akredCount.TT++;
-        else akredCount.Belum++;
-      });
-
-      const registeredCount = list.length;
-      if (registeredCount < TOTAL_SMP_ANGKASA) {
-        akredCount.Belum += (TOTAL_SMP_ANGKASA - registeredCount);
+      function getMinMax(arr, key, isRupiah = true) {
+        if (!arr || arr.length === 0) return { min: '-', max: '-' };
+        let sorted = [...arr].sort((a, b) => a[key] - b[key]);
+        let lowest = sorted[0];
+        let highest = sorted[sorted.length - 1];
+        let valMin = isRupiah ? formatRupiah(lowest[key]) : formatAngka(lowest[key]);
+        let valMax = isRupiah ? formatRupiah(highest[key]) : formatAngka(highest[key]);
+        return {
+          min: lowest.nama + ' (' + valMin + ')',
+          max: highest.nama + ' (' + valMax + ')'
+        };
       }
 
-      const pctA = ((akredCount.A / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-      const pctB = ((akredCount.B / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-      const pctC = ((akredCount.C / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-      const pctTT = ((akredCount.TT / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
-      const pctBelum = ((akredCount.Belum / TOTAL_SMP_ANGKASA) * 100).toFixed(1);
+      const an = stats.analysisList || [];
+      const compDopUmum = getMinMax(an, 'dopUmum', true);
+      const compDopTni = getMinMax(an, 'dopTni', true);
+      const compDsp = getMinMax(an, 'dsp', true);
+      const compRpss = getMinMax(an, 'rpss', true);
+      const compPendidik = getMinMax(an, 'pendidik', false);
+      const compTendik = getMinMax(an, 'tendik', false);
 
-      return '<div class="space-y-6"><div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5"><div class="flex items-center justify-between border-b pb-3.5"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-brand-orange"></i> Analysis & Executive Decision Support</h3><p class="text-xs text-slate-500">Kalkulasi cerdas otomatis dari data terkini berbasis populasi 15 SMP Angkasa.</p></div><span class="text-xs font-bold bg-amber-100 text-amber-900 px-3.5 py-1.5 rounded-full border border-amber-200">Executive View</span></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs"><div class="bg-blue-50/70 border border-blue-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Total Proyeksi Penerimaan/Thn</span><h4 class="text-lg font-black text-brand-blue">' + formatRupiah(stats.grandTotalPenerimaanThn) + '</h4></div><div class="bg-emerald-50/70 border border-emerald-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Kepatuhan Berkas Laporan</span><h4 class="text-lg font-black text-emerald-700">' + formatAngka(complianceRate) + '% Terverifikasi</h4></div><div class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Rata-Rata Siswa / Rombel</span><h4 class="text-lg font-black text-amber-700">' + avgSiswaPerRombel + ' Siswa</h4><span class="text-[10px] ' + statusRombelColor + ' font-bold">' + statusRombel + '</span></div><div class="bg-purple-50/70 border border-purple-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Rasio Guru Tetap (GTY)</span><h4 class="text-lg font-black text-purple-700">' + formatAngka(pctGTY) + '% GTY</h4></div></div><div class="border-t pt-4 space-y-3"><div class="flex justify-between items-center"><h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="award" class="w-4 h-4 text-brand-blue"></i> Profil Akreditasi Sekolah Global</h4><span class="text-[11px] font-semibold text-slate-500 bg-slate-50 px-3 py-1 rounded-xl border">Basis: 15 SMP Angkasa</span></div><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs"><div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-emerald-700 font-bold block">A (Unggul)</span><h5 class="text-xl font-black text-emerald-800">' + formatAngka(akredCount.A) + '</h5><span class="text-[10px] text-emerald-600 font-bold">' + pctA + '%</span></div><div class="bg-blue-50 border border-blue-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-blue-700 font-bold block">B (Baik)</span><h5 class="text-xl font-black text-blue-800">' + formatAngka(akredCount.B) + '</h5><span class="text-[10px] text-blue-600 font-bold">' + pctB + '%</span></div><div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-amber-700 font-bold block">C (Cukup Baik)</span><h5 class="text-xl font-black text-amber-800">' + formatAngka(akredCount.C) + '</h5><span class="text-[10px] text-amber-600 font-bold">' + pctC + '%</span></div><div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-rose-700 font-bold block">Tidak Terakreditasi</span><h5 class="text-xl font-black text-rose-800">' + formatAngka(akredCount.TT) + '</h5><span class="text-[10px] text-rose-600 font-bold">' + pctTT + '%</span></div><div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl text-center"><span class="text-[11px] text-slate-600 font-bold block">Belum Mengisi</span><h5 class="text-xl font-black text-slate-800">' + formatAngka(akredCount.Belum) + '</h5><span class="text-[10px] text-slate-500 font-bold">' + pctBelum + '%</span></div></div></div></div></div>';
+      return '<div class="space-y-6"><div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5"><div class="flex items-center justify-between border-b pb-3.5"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-brand-orange"></i> Analisis & Insight Eksekutif (Tertinggi vs Terendah)</h3><p class="text-xs text-slate-500">Perbandingan komparatif otomatis antar sekolah di lingkungan Yasarini.</p></div><span class="text-xs font-bold bg-amber-100 text-amber-900 px-3.5 py-1.5 rounded-full border border-amber-200">Executive View</span></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs"><div class="bg-blue-50/70 border border-blue-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Total Proyeksi Penerimaan/Thn</span><h4 class="text-lg font-black text-brand-blue">' + formatRupiah(stats.grandTotalPenerimaanThn) + '</h4></div><div class="bg-emerald-50/70 border border-emerald-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Kepatuhan Berkas Laporan</span><h4 class="text-lg font-black text-emerald-700">' + formatAngka(complianceRate) + '% Terverifikasi</h4></div><div class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Rata-Rata Siswa / Rombel</span><h4 class="text-lg font-black text-amber-700">' + avgSiswaPerRombel + ' Siswa</h4></div><div class="bg-purple-50/70 border border-purple-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Total Sekolah Terdata</span><h4 class="text-lg font-black text-purple-700">' + formatAngka(stats.totalSekolah) + ' Sekolah</h4></div></div>' +
+      
+      '<div class="border-t pt-4 space-y-3"><h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="trending-up" class="w-4 h-4 text-brand-blue"></i> Komparasi Tertinggi & Terendah per Komponen Sekolah</h4>' +
+      '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">' +
+        '<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2"><span class="font-bold text-slate-700 block border-b pb-1">DOP Bulanan Umum</span><div class="text-[11px] text-emerald-700"><strong>Tertinggi:</strong> ' + compDopUmum.max + '</div><div class="text-[11px] text-rose-600"><strong>Terendah:</strong> ' + compDopUmum.min + '</div></div>' +
+        '<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2"><span class="font-bold text-slate-700 block border-b pb-1">DOP Bulanan Anak TNI-AU</span><div class="text-[11px] text-emerald-700"><strong>Tertinggi:</strong> ' + compDopTni.max + '</div><div class="text-[11px] text-rose-600"><strong>Terendah:</strong> ' + compDopTni.min + '</div></div>' +
+        '<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2"><span class="font-bold text-slate-700 block border-b pb-1">Penerimaan DSP SPMB</span><div class="text-[11px] text-emerald-700"><strong>Tertinggi:</strong> ' + compDsp.max + '</div><div class="text-[11px] text-rose-600"><strong>Terendah:</strong> ' + compDsp.min + '</div></div>' +
+        '<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2"><span class="font-bold text-slate-700 block border-b pb-1">Sumber Dana RPSS</span><div class="text-[11px] text-emerald-700"><strong>Tertinggi:</strong> ' + compRpss.max + '</div><div class="text-[11px] text-rose-600"><strong>Terendah:</strong> ' + compRpss.min + '</div></div>' +
+        '<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2"><span class="font-bold text-slate-700 block border-b pb-1">Jumlah Pendidik (Guru)</span><div class="text-[11px] text-emerald-700"><strong>Tertinggi:</strong> ' + compPendidik.max + '</div><div class="text-[11px] text-rose-600"><strong>Terendah:</strong> ' + compPendidik.min + '</div></div>' +
+        '<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2"><span class="font-bold text-slate-700 block border-b pb-1">Jumlah Tenaga Kependidikan</span><div class="text-[11px] text-emerald-700"><strong>Tertinggi:</strong> ' + compTendik.max + '</div><div class="text-[11px] text-rose-600"><strong>Terendah:</strong> ' + compTendik.min + '</div></div>' +
+      '</div></div></div></div>';
     }
 
     function renderValidasiModule(list) {
