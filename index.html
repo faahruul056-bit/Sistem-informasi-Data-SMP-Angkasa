@@ -873,16 +873,7 @@
 
     function formatDateClean(dateStr) {
       if (!dateStr || dateStr === "-") return "-";
-      // Jika formatnya sudah ISO date string dari database/spreadsheet
-      if (typeof dateStr === "string" && (dateStr.includes("T") || dateStr.includes("Z"))) {
-        const d = new Date(dateStr);
-        if (!isNaN(d.getTime())) {
-          // Ambil tanggal UTC murni agar tidak tergeser zona waktu lokal
-          const year = d.getUTCFullYear();
-          const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-          const day = String(d.getUTCDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
-        }
+      if (typeof dateStr === "string" && dateStr.includes("T")) {
         return dateStr.split("T")[0];
       }
       return dateStr;
@@ -943,22 +934,11 @@
     }
 
     function downloadDummyDoc(fileName) {
-      if (!fileName) {
-        alert("Nama file tidak ditemukan!");
-        return;
-      }
       const element = document.createElement('a');
-      // Membuat format MIME type yang sesuai agar tidak error "unsupported format"
-      const ext = fileName.split('.').pop().toLowerCase();
-      let mimeType = 'text/plain;charset=utf-8';
-      if (ext === 'pdf') mimeType = 'application/pdf';
-      else if (ext === 'xlsx' || ext === 'xls') mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      else if (ext === 'docx' || ext === 'doc') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-      const fileContent = "SIDSA SYSTEM GENERATED SECURE DOCUMENT BACKUP FOR: " + fileName;
-      const file = new Blob([fileContent], { type: mimeType });
+      const fileText = "SIDSA SYSTEM GENERATED FILE CONTENT FOR: " + fileName;
+      const file = new Blob([fileText], {type: 'text/plain'});
       element.href = URL.createObjectURL(file);
-      element.download = fileName;
+      element.download = fileName || "Dokumen_Sekolah.txt";
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
@@ -2124,9 +2104,9 @@
 
           let docStatusRows = '';
           const legItems = [
-            { label: 'Sertifikat Akreditasi', file: leg.fileAkreditasi || s.fileAkreditasi, status: leg.statusAkreditasi || 'Valid', note: leg.notesAkreditasi },
-            { label: 'SK Pendirian Sekolah', file: leg.fileSKPendirian || s.fileSKPendirian, status: leg.statusSKPendirian || 'Valid', note: leg.notesSKPendirian },
-            { label: 'SK Izin Operasional', file: leg.fileSKIzin || s.fileSKIzin, status: leg.statusSKIzin || 'Valid', note: leg.notesSKIzin }
+            { label: 'Sertifikat Akreditasi', file: leg.fileAkreditasi, status: leg.statusAkreditasi || 'Belum Diisi', note: leg.notesAkreditasi },
+            { label: 'SK Pendirian Sekolah', file: leg.fileSKPendirian, status: leg.statusSKPendirian || 'Belum Diisi', note: leg.notesSKPendirian },
+            { label: 'SK Izin Operasional', file: leg.fileSKIzin, status: leg.statusSKIzin || 'Belum Diisi', note: leg.notesSKIzin }
           ];
 
           legItems.forEach(item => {
