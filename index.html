@@ -2097,14 +2097,15 @@
 
           let docStatusRows = '';
           const legItems = [
-            { label: 'Sertifikat Akreditasi', status: leg.statusAkreditasi || 'Belum Diisi', note: leg.notesAkreditasi },
-            { label: 'SK Pendirian Sekolah', status: leg.statusSKPendirian || 'Belum Diisi', note: leg.notesSKPendirian },
-            { label: 'SK Izin Operasional', status: leg.statusSKIzin || 'Belum Diisi', note: leg.notesSKIzin }
+            { label: 'Sertifikat Akreditasi', file: leg.fileAkreditasi, status: leg.statusAkreditasi || 'Belum Diisi', note: leg.notesAkreditasi },
+            { label: 'SK Pendirian Sekolah', file: leg.fileSKPendirian, status: leg.statusSKPendirian || 'Belum Diisi', note: leg.notesSKPendirian },
+            { label: 'SK Izin Operasional', file: leg.fileSKIzin, status: leg.statusSKIzin || 'Belum Diisi', note: leg.notesSKIzin }
           ];
 
           legItems.forEach(item => {
             let noteStr = item.note ? ' <span class="text-rose-600 font-semibold">(Catatan Pusat: "' + item.note + '")</span>' : '';
-            docStatusRows += '<div class="flex justify-between items-center py-1 border-b border-slate-100 last:border-0"><span class="text-slate-700">• ' + item.label + noteStr + '</span><div>' + renderStatusBadge(item.status) + '</div></div>';
+            let fileStatusBadge = item.file ? renderStatusBadge(item.status) : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300">Belum Mengisi</span>';
+            docStatusRows += '<div class="flex justify-between items-center py-1 border-b border-slate-100 last:border-0"><span class="text-slate-700">• ' + item.label + noteStr + '</span><div>' + fileStatusBadge + '</div></div>';
           });
 
           if (s.dokumenLaporan) {
