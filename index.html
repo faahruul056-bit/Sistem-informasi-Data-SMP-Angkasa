@@ -252,7 +252,7 @@
 
       fetch(GOOGLE_SHEET_WEB_APP_URL, {
         method: "POST",
-        mode: "no-cors",
+        mode: "no-cors", // Catatan: mode 'no-cors' membuat response.json() di sisi client kadang terbatas.
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
       })
@@ -922,7 +922,7 @@
       }
     }
 
-    function openPreviewDocModal(schoolName, docLabel, fileName) {
+    function openPreviewDocModal(schoolName, docLabel, fileName, fileUrl) {
       const modal = document.getElementById('previewDocModal');
       const title = document.getElementById('docModalTitle');
       const subtitle = document.getElementById('docModalSubtitle');
@@ -932,20 +932,29 @@
       title.innerHTML = '<i data-lucide="file-text" class="w-5 h-5 text-brand-blue"></i> Preview ' + docLabel;
       subtitle.innerText = schoolName + ' • Nama File: ' + fileName;
 
-      dlBtn.onclick = function() {
-        downloadDummyDoc(fileName);
-      };
-
-      const ext = fileName.split('.').pop().toLowerCase();
-      
-      if (ext === 'pdf') {
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-spreadsheet" class="w-16 h-16 text-rose-500 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Berkas PDF (' + fileName + ')</h4><p class="text-xs text-slate-500 max-w-md mx-auto">Berkas dokumen PDF resmi telah diverifikasi oleh sistem.</p><div class="p-6 bg-white rounded-xl border border-slate-200 text-left max-w-lg mx-auto shadow-sm space-y-2 text-xs font-mono text-slate-600"><p class="font-bold text-slate-800">[DOKUMEN TERVERIFIKASI PUSAT]</p><p>• Jenis Laporan: ' + docLabel + '</p><p>• Status Pengiriman: Diterima</p><p>• Integritas File: OK (2.4 MB)</p></div></div>';
-      } else if (ext === 'doc' || ext === 'docx') {
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-text" class="w-16 h-16 text-blue-600 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Dokumen Word (' + fileName + ')</h4><p class="text-xs text-slate-500 max-w-md mx-auto">Pratinjau berkas format Microsoft Word tersedia.</p><div class="p-6 bg-white rounded-xl border border-slate-200 text-left max-w-lg mx-auto shadow-sm space-y-2 text-xs text-slate-700"><div><strong class="block text-slate-800 text-sm mb-1">' + docLabel + ' - ' + schoolName + '</strong><p class="text-slate-500 italic">Ringkasan isi dokumen memuat detail rencana kerja operasional sekolah.</p></div></div></div>';
-      } else if (ext === 'xls' || ext === 'xlsx' || ext === 'csv') {
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-spreadsheet" class="w-16 h-16 text-emerald-600 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Pratinjau Lembar Kerja Excel (' + fileName + ')</h4><p class="text-xs text-slate-500 max-w-md mx-auto">Berkas lembar kerja angka/tabel Keuangan atau Sarpras terdeteksi.</p></div>';
+      // Jika URL file Drive asli ada, arahkan tombol unduh & preview ke URL tersebut
+      if (fileUrl && fileUrl.startsWith('http')) {
+        dlBtn.onclick = function() {
+          window.open(fileUrl, '_blank');
+        };
+        
+        // Tampilkan iframe/embed atau tombol buka file langsung ke Google Drive
+        body.innerHTML = `
+          <div class="w-full text-center space-y-4 py-8">
+            <i data-lucide="file-check-2" class="w-16 h-16 text-emerald-600 mx-auto"></i>
+            <h4 class="font-bold text-slate-800 text-base">Berkas Tersedia di Google Drive</h4>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">File <strong>${fileName}</strong> tersimpan aman di folder Cloud Drive pusat.</p>
+            <a href="${fileUrl}" target="_blank" class="inline-flex items-center gap-2 bg-brand-blue text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm hover:bg-brand-blueDark transition">
+              <i data-lucide="external-link" class="w-4 h-4"></i> Buka Berkas Penuh di Tab Baru
+            </a>
+          </div>
+        `;
       } else {
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file" class="w-16 h-16 text-slate-400 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Berkas Dokumen (' + fileName + ')</h4></div>';
+        // Fallback jika file belum memiliki URL Drive riil
+        dlBtn.onclick = function() {
+          downloadDummyDoc(fileName);
+        };
+        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-text" class="w-16 h-16 text-slate-400 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Berkas: ' + fileName + '</h4><p class="text-xs text-slate-500">URL tautan file Google Drive belum disinkronkan untuk berkas ini.</p></div>';
       }
 
       modal.classList.remove('hidden');
