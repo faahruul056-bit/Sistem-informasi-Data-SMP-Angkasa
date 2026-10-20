@@ -873,14 +873,15 @@
 
     function formatDateClean(dateStr) {
       if (!dateStr || dateStr === "-") return "-";
-      // Jika formatnya sudah ISO date string dari database/spreadsheet
-      if (typeof dateStr === "string" && (dateStr.includes("T") || dateStr.includes("Z"))) {
+      
+      // Jika formatnya date string atau ISO dari database/spreadsheet
+      if (typeof dateStr === "string" && (dateStr.includes("T") || dateStr.includes("Z") || dateStr.includes("-"))) {
         const d = new Date(dateStr);
         if (!isNaN(d.getTime())) {
-          // Ambil tanggal UTC murni agar tidak tergeser zona waktu lokal
-          const year = d.getUTCFullYear();
-          const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-          const day = String(d.getUTCDate()).padStart(2, '0');
+          // Gunakan waktu LOKAL (getFullYear, getMonth, getDate) agar tidak mundur sehari akibat selisih UTC
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
           return `${year}-${month}-${day}`;
         }
         return dateStr.split("T")[0];
