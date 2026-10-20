@@ -1224,15 +1224,24 @@
           school.legalitas.skIzin = document.getElementById('id_sk_izin_' + npsn)?.value || school.legalitas.skIzin || "-";
           school.legalitas.tglSKIzin = document.getElementById('id_tglsk_izin_' + npsn)?.value || school.legalitas.tglSKIzin || "-";
 
+          // Simpan nama file dan SET status menjadi "Menunggu Validasi"
           school.legalitas[fieldKey] = fileName;
 
-          if (fieldKey === 'fileAkreditasi') { school.legalitas.statusAkreditasi = "Menunggu Validasi"; school.legalitas.notesAkreditasi = ""; }
-          if (fieldKey === 'fileSKPendirian') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
-          if (fieldKey === 'fileSKIzin') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
+          if (fieldKey === 'fileAkreditasi') { 
+            school.legalitas.statusAkreditasi = "Menunggu Validasi"; 
+            school.legalitas.notesAkreditasi = ""; 
+          }
+          if (fieldKey === 'fileSKPendirian') { 
+            school.legalitas.statusSKPendirian = "Menunggu Validasi"; 
+            school.legalitas.notesSKPendirian = ""; 
+          }
+          if (fieldKey === 'fileSKIzin') { 
+            school.legalitas.statusSKIzin = "Menunggu Validasi"; 
+            school.legalitas.notesSKIzin = ""; 
+          }
 
           markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
 
-          // Payload lengkap agar tertangkap oleh fungsi file handler di GAS
           const payload = {
             updatedModule: "identitas",
             kategoriFolder: katFolder,
@@ -1255,7 +1264,7 @@
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
           }).then(() => {
-            alert('Berkas "' + fileName + '" Berhasil Diunggah ke Drive & Disinkronkan!');
+            alert('Berkas "' + fileName + '" Berhasil Diunggah & Menunggu Validasi Pusat!');
           }).catch(err => {
             console.error("Gagal upload file:", err);
           });
