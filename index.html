@@ -930,31 +930,35 @@
       const dlBtn = document.getElementById('docModalDownloadBtn');
 
       title.innerHTML = '<i data-lucide="file-text" class="w-5 h-5 text-brand-blue"></i> Preview ' + docLabel;
-      subtitle.innerText = schoolName + ' • Nama File: ' + fileName;
+      subtitle.innerText = schoolName + ' • ' + fileName;
 
-      // Jika URL file Drive asli ada, arahkan tombol unduh & preview ke URL tersebut
+      // Cek apakah file memiliki URL Google Drive asli yang valid
       if (fileUrl && fileUrl.startsWith('http')) {
         dlBtn.onclick = function() {
           window.open(fileUrl, '_blank');
         };
-        
-        // Tampilkan iframe/embed atau tombol buka file langsung ke Google Drive
         body.innerHTML = `
-          <div class="w-full text-center space-y-4 py-8">
+          <div class="w-full text-center space-y-4 py-6">
             <i data-lucide="file-check-2" class="w-16 h-16 text-emerald-600 mx-auto"></i>
-            <h4 class="font-bold text-slate-800 text-base">Berkas Tersedia di Google Drive</h4>
-            <p class="text-xs text-slate-500 max-w-md mx-auto">File <strong>${fileName}</strong> tersimpan aman di folder Cloud Drive pusat.</p>
+            <h4 class="font-bold text-slate-800 text-base">Berkas Tersedia di Cloud Drive</h4>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto truncate px-4">File: <strong>${fileName}</strong></p>
             <a href="${fileUrl}" target="_blank" class="inline-flex items-center gap-2 bg-brand-blue text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm hover:bg-brand-blueDark transition">
-              <i data-lucide="external-link" class="w-4 h-4"></i> Buka Berkas Penuh di Tab Baru
+              <i data-lucide="external-link" class="w-4 h-4"></i> Buka File Asli di Tab Baru
             </a>
           </div>
         `;
       } else {
-        // Fallback jika file belum memiliki URL Drive riil
+        // Fallback jika belum tersinkron ke Drive
         dlBtn.onclick = function() {
           downloadDummyDoc(fileName);
         };
-        body.innerHTML = '<div class="w-full text-center space-y-3 py-8"><i data-lucide="file-text" class="w-16 h-16 text-slate-400 mx-auto"></i><h4 class="font-bold text-slate-800 text-base">Berkas: ' + fileName + '</h4><p class="text-xs text-slate-500">URL tautan file Google Drive belum disinkronkan untuk berkas ini.</p></div>';
+        body.innerHTML = `
+          <div class="w-full text-center space-y-3 py-6">
+            <i data-lucide="file-text" class="w-16 h-16 text-slate-400 mx-auto"></i>
+            <h4 class="font-bold text-slate-800 text-base">${fileName}</h4>
+            <p class="text-xs text-slate-500">Tautan Google Drive untuk dokumen ini belum terhubung ke database.</p>
+          </div>
+        `;
       }
 
       modal.classList.remove('hidden');
