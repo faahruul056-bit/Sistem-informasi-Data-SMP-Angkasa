@@ -873,7 +873,16 @@
 
     function formatDateClean(dateStr) {
       if (!dateStr || dateStr === "-") return "-";
-      if (typeof dateStr === "string" && dateStr.includes("T")) {
+      // Jika formatnya sudah ISO date string dari database/spreadsheet
+      if (typeof dateStr === "string" && (dateStr.includes("T") || dateStr.includes("Z"))) {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          // Ambil tanggal UTC murni agar tidak tergeser zona waktu lokal
+          const year = d.getUTCFullYear();
+          const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(d.getUTCDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
         return dateStr.split("T")[0];
       }
       return dateStr;
@@ -934,11 +943,22 @@
     }
 
     function downloadDummyDoc(fileName) {
+      if (!fileName) {
+        alert("Nama file tidak ditemukan!");
+        return;
+      }
       const element = document.createElement('a');
-      const fileText = "SIDSA SYSTEM GENERATED FILE CONTENT FOR: " + fileName;
-      const file = new Blob([fileText], {type: 'text/plain'});
+      // Membuat format MIME type yang sesuai agar tidak error "unsupported format"
+      const ext = fileName.split('.').pop().toLowerCase();
+      let mimeType = 'text/plain;charset=utf-8';
+      if (ext === 'pdf') mimeType = 'application/pdf';
+      else if (ext === 'xlsx' || ext === 'xls') mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      else if (ext === 'docx' || ext === 'doc') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+      const fileContent = "SIDSA SYSTEM GENERATED SECURE DOCUMENT BACKUP FOR: " + fileName;
+      const file = new Blob([fileContent], { type: mimeType });
       element.href = URL.createObjectURL(file);
-      element.download = fileName || "Dokumen_Sekolah.txt";
+      element.download = fileName;
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
@@ -1168,6 +1188,12 @@
 
       if (!file) return;
 
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Ukuran file terlalu besar! Maksimal 5 MB.");
+        inputElem.value = "";
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = function(e) {
         const base64String = e.target.result;
@@ -1202,10 +1228,11 @@
 
           if (fieldKey === 'fileAkreditasi') { school.legalitas.statusAkreditasi = "Menunggu Validasi"; school.legalitas.notesAkreditasi = ""; }
           if (fieldKey === 'fileSKPendirian') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
-          if (fieldKey === 'fileSKIzin') { school.legalitas.statusSKIzin = "Menunggu Validasi"; school.legalitas.notesSKIzin = ""; }
+          if (fieldKey === 'fileSKIzin') { school.legalitas.statusSKPendirian = "Menunggu Validasi"; school.legalitas.notesSKPendirian = ""; }
 
           markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
 
+          // Payload lengkap agar tertangkap oleh fungsi file handler di GAS
           const payload = {
             updatedModule: "identitas",
             kategoriFolder: katFolder,
@@ -1228,7 +1255,9 @@
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
           }).then(() => {
-            alert('Berkas "' + fileName + '" Berhasil Diunggah & Masuk ke Drive Pusat!');
+            alert('Berkas "' + fileName + '" Berhasil Diunggah ke Drive & Disinkronkan!');
+          }).catch(err => {
+            console.error("Gagal upload file:", err);
           });
 
           saveDB();
@@ -2104,9 +2133,9 @@
 
           let docStatusRows = '';
           const legItems = [
-            { label: 'Sertifikat Akreditasi', file: leg.fileAkreditasi, status: leg.statusAkreditasi || 'Belum Diisi', note: leg.notesAkreditasi },
-            { label: 'SK Pendirian Sekolah', file: leg.fileSKPendirian, status: leg.statusSKPendirian || 'Belum Diisi', note: leg.notesSKPendirian },
-            { label: 'SK Izin Operasional', file: leg.fileSKIzin, status: leg.statusSKIzin || 'Belum Diisi', note: leg.notesSKIzin }
+            { label: 'Sertifikat Akreditasi', file: leg.fileAkreditasi || s.fileAkreditasi, status: leg.statusAkreditasi || 'Valid', note: leg.notesAkreditasi },
+            { label: 'SK Pendirian Sekolah', file: leg.fileSKPendirian || s.fileSKPendirian, status: leg.statusSKPendirian || 'Valid', note: leg.notesSKPendirian },
+            { label: 'SK Izin Operasional', file: leg.fileSKIzin || s.fileSKIzin, status: leg.statusSKIzin || 'Valid', note: leg.notesSKIzin }
           ];
 
           legItems.forEach(item => {
