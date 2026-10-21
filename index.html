@@ -1170,36 +1170,30 @@
           }
 
           let prevBtnSKPend = fileSKPend ? `
-            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs gap-1 overflow-hidden">
-              <span class="text-[11px] text-slate-500 truncate max-w-[100px]" title="${fileSKPend}">File: ${fileSKPend}</span>
+            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs gap-1">
+              <span class="text-[11px] text-slate-500 truncate max-w-[110px]" title="${fileSKPend}">${fileSKPend}</span>
               <div class="flex items-center gap-1.5 shrink-0">
                 <button type="button" onclick="openPreviewDocModal('${s.nama}', 'SK Pendirian Sekolah', '${fileSKPend}', '${leg.fileSKPendirianUrl || ''}')" class="text-[11px] font-bold text-brand-blue hover:underline">Preview</button>
                 <span class="text-slate-300">|</span>
-                <button type="button" onclick="downloadDummyDoc('${fileSKPend}')" class="text-[11px] font-bold text-slate-600 hover:text-brand-blue flex items-center gap-0.5" title="Unduh File">
-                  <i data-lucide="download" class="w-3 h-3"></i> Unduh
-                </button>
+                <button type="button" onclick="downloadDummyDoc('${fileSKPend}')" class="text-[11px] font-bold text-slate-600 hover:text-brand-blue">Unduh</button>
               </div>
             </div>` : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
           let prevBtnSKIzin = fileSKIzin ? `
-            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs gap-1 overflow-hidden">
-              <span class="text-[11px] text-slate-500 truncate max-w-[100px]" title="${fileSKIzin}">File: ${fileSKIzin}</span>
+            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs gap-1">
+              <span class="text-[11px] text-slate-500 truncate max-w-[110px]" title="${fileSKIzin}">${fileSKIzin}</span>
               <div class="flex items-center gap-1.5 shrink-0">
                 <button type="button" onclick="openPreviewDocModal('${s.nama}', 'SK Izin Operasional', '${fileSKIzin}', '${leg.fileSKIzinUrl || ''}')" class="text-[11px] font-bold text-brand-blue hover:underline">Preview</button>
                 <span class="text-slate-300">|</span>
-                <button type="button" onclick="downloadDummyDoc('${fileSKIzin}')" class="text-[11px] font-bold text-slate-600 hover:text-brand-blue flex items-center gap-0.5" title="Unduh File">
-                  <i data-lucide="download" class="w-3 h-3"></i> Unduh
-                </button>
+                <button type="button" onclick="downloadDummyDoc('${fileSKIzin}')" class="text-[11px] font-bold text-slate-600 hover:text-brand-blue">Unduh</button>
               </div>
             </div>` : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
           let prevBtnAkred = fileAkred ? `
-            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs gap-1 overflow-hidden">
-              <span class="text-[11px] text-slate-500 truncate max-w-[100px]" title="${fileAkred}">File: ${fileAkred}</span>
+            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs gap-1">
+              <span class="text-[11px] text-slate-500 truncate max-w-[110px]" title="${fileAkred}">${fileAkred}</span>
               <div class="flex items-center gap-1.5 shrink-0">
                 <button type="button" onclick="openPreviewDocModal('${s.nama}', 'Sertifikat Akreditasi', '${fileAkred}', '${leg.fileAkreditasiUrl || ''}')" class="text-[11px] font-bold text-brand-blue hover:underline">Preview</button>
                 <span class="text-slate-300">|</span>
-                <button type="button" onclick="downloadDummyDoc('${fileAkred}')" class="text-[11px] font-bold text-slate-600 hover:text-brand-blue flex items-center gap-0.5" title="Unduh File">
-                  <i data-lucide="download" class="w-3 h-3"></i> Unduh
-                </button>
+                <button type="button" onclick="downloadDummyDoc('${fileAkred}')" class="text-[11px] font-bold text-slate-600 hover:text-brand-blue">Unduh</button>
               </div>
             </div>` : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
           let noteBoxAkred = ntAkred ? '<div class="p-2 bg-rose-100 border border-rose-200 rounded-xl text-[11px] text-rose-800 font-semibold mt-2">Catatan Admin Pusat: "' + ntAkred + '"</div>' : '';
