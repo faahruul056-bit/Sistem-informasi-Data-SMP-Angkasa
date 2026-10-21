@@ -932,7 +932,6 @@
       title.innerHTML = '<i data-lucide="file-text" class="w-5 h-5 text-brand-blue"></i> Preview ' + docLabel;
       subtitle.innerText = schoolName + ' • ' + fileName;
 
-      // Cek apakah file memiliki URL Google Drive asli yang valid
       if (fileUrl && fileUrl.startsWith('http')) {
         dlBtn.onclick = function() {
           window.open(fileUrl, '_blank');
@@ -948,7 +947,6 @@
           </div>
         `;
       } else {
-        // Fallback jika belum tersinkron ke Drive
         dlBtn.onclick = function() {
           downloadDummyDoc(fileName);
         };
@@ -956,7 +954,7 @@
           <div class="w-full text-center space-y-3 py-6">
             <i data-lucide="file-text" class="w-16 h-16 text-slate-400 mx-auto"></i>
             <h4 class="font-bold text-slate-800 text-base">${fileName}</h4>
-            <p class="text-xs text-slate-500">Tautan Google Drive untuk dokumen ini belum terhubung ke database.</p>
+            <p class="text-xs text-slate-500">Tautan Google Drive untuk dokumen ini belum terhubung.</p>
           </div>
         `;
       }
@@ -1171,11 +1169,11 @@
             alertBannerHtml = '<div class="p-4 bg-rose-50 border border-rose-300 rounded-2xl flex items-center gap-3 text-xs text-rose-800 font-medium shadow-sm"><i data-lucide="alert-triangle" class="w-6 h-6 text-rose-600 shrink-0"></i><div><strong class="font-bold text-rose-900 block text-sm">Perhatian: Terdapat Dokumen Legalitas yang Memerlukan Perbaikan!</strong><p class="mt-0.5">Admin Pusat meminta perbaikan pada dokumen terunggah Anda. Silakan periksa catatan revisi di bawah dan unggah ulang berkas yang sesuai.</p></div></div>';
           }
 
-          let prevBtnSKPend = fileSKPend ? '<div class="mt-1 flex items-center justify-between"><span class="text-[10px] text-slate-600 font-semibold truncate max-w-[180px]">File: ' + fileSKPend + '</span><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'SK Pendirian Sekolah\', \'' + fileSKPend + '\')" class="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Preview</button></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
+          let prevBtnSKPend = fileSKPend ? '<div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs"><span class="text-[11px] text-slate-500 truncate max-w-[120px]" title="' + fileSKPend + '">File: ' + fileSKPend + '</span><div class="flex items-center gap-1.5 shrink-0"><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'SK Pendirian Sekolah\', \'' + fileSKPend + '\', \'' + (leg.fileSKPendirianUrl || '') + '\')" class="text-[11px] font-bold text-brand-blue hover:underline">Preview</button></div></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
 
-          let prevBtnSKIzin = fileSKIzin ? '<div class="mt-1 flex items-center justify-between"><span class="text-[10px] text-slate-600 font-semibold truncate max-w-[180px]">File: ' + fileSKIzin + '</span><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'SK Izin Operasional\', \'' + fileSKIzin + '\')" class="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Preview</button></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
+          let prevBtnSKIzin = fileSKIzin ? '<div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs"><span class="text-[11px] text-slate-500 truncate max-w-[120px]" title="' + fileSKIzin + '">File: ' + fileSKIzin + '</span><div class="flex items-center gap-1.5 shrink-0"><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'SK Izin Operasional\', \'' + fileSKIzin + '\', \'' + (leg.fileSKIzinUrl || '') + '\')" class="text-[11px] font-bold text-brand-blue hover:underline">Preview</button></div></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
 
-          let prevBtnAkred = fileAkred ? '<div class="mt-1 flex items-center justify-between"><span class="text-[10px] text-slate-600 font-semibold truncate max-w-[180px]">File: ' + fileAkred + '</span><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'Sertifikat Akreditasi\', \'' + fileAkred + '\')" class="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> Preview</button></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
+          let prevBtnAkred = fileAkred ? '<div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs"><span class="text-[11px] text-slate-500 truncate max-w-[120px]" title="' + fileAkred + '">File: ' + fileAkred + '</span><div class="flex items-center gap-1.5 shrink-0"><button type="button" onclick="openPreviewDocModal(\'' + s.nama + '\', \'Sertifikat Akreditasi\', \'' + fileAkred + '\', \'' + (leg.fileAkreditasiUrl || '') + '\')" class="text-[11px] font-bold text-brand-blue hover:underline">Preview</button></div></div>' : '<span class="text-[10px] text-slate-400 italic block mt-1">Belum ada berkas terunggah</span>';
 
           let noteBoxAkred = ntAkred ? '<div class="p-2 bg-rose-100 border border-rose-200 rounded-xl text-[11px] text-rose-800 font-semibold mt-2">Catatan Admin Pusat: "' + ntAkred + '"</div>' : '';
           let noteBoxSKPend = ntSKPend ? '<div class="p-2 bg-rose-100 border border-rose-200 rounded-xl text-[11px] text-rose-800 font-semibold mt-2">Catatan Admin Pusat: "' + ntSKPend + '"</div>' : '';
@@ -1895,7 +1893,7 @@
             let notesHtml = docData.notes ? '<div class="text-rose-700 bg-rose-100 p-2 rounded-xl border border-rose-200 mt-1 font-semibold text-[11px]">Catatan Admin Pusat: "' + docData.notes + '"</div>' : '';
             let uploadHtml = isEditable ? '<div class="pt-2 border-t border-slate-200/60"><label class="block text-[10px] font-semibold text-slate-500 mb-1">Unggah/Ganti Berkas (PDF/Excel):</label><input type="file" onchange="uploadDocFile(\'' + s.npsn + '\', \'' + doc.key + '\', this)" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"></div>' : '';
 
-            let previewBtn = docData.fileName ? '<button onclick="openPreviewDocModal(\'' + s.nama + '\', \'' + doc.label + '\', \'' + docData.fileName + '\')" class="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1 mt-1"><i data-lucide="eye" class="w-3 h-3"></i> Lihat Preview File</button>' : '';
+            let previewBtn = docData.fileName ? '<div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs"><span class="text-[11px] text-slate-500 truncate max-w-[120px]" title="' + docData.fileName + '">File: ' + docData.fileName + '</span><div class="flex items-center gap-1.5 shrink-0"><button onclick="openPreviewDocModal(\'' + s.nama + '\', \'' + doc.label + '\', \'' + docData.fileName + '\', \'' + (docData.fileUrl || '') + '\')" class="text-[11px] font-bold text-brand-blue hover:underline">Preview</button></div></div>' : '';
 
             docsGridHtml += '<div class="p-4 rounded-2xl border flex flex-col justify-between gap-3 shadow-sm ' + bgBorderClass + '"><div class="space-y-1.5"><div class="flex items-start justify-between gap-2"><span class="text-xs font-bold text-slate-800 block leading-snug">' + doc.label + '</span><div class="shrink-0">' + renderStatusBadge(docData.status) + '</div></div><div class="text-[11px] text-slate-500 space-y-0.5 pt-1"><div>File: <strong class="text-slate-700">' + (docData.fileName || 'Belum ada berkas diunggah') + '</strong></div>' + previewBtn + notesHtml + '</div></div>' + uploadHtml + '</div>';
           });
