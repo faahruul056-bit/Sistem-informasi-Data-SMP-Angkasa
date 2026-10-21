@@ -956,28 +956,33 @@
       document.getElementById('previewDocModal').classList.add('hidden');
     }
 
-    function downloadDummyDoc(fileName) {
-      if (!fileName) {
-        alert("Nama file tidak ditemukan!");
+    function downloadDummyDoc(fileUrlOrName) {
+      if (!fileUrlOrName || fileUrlOrName === "-") {
+        alert("File berkas tidak ditemukan!");
         return;
       }
-      const element = document.createElement('a');
-      // Membuat format MIME type yang sesuai agar tidak error "unsupported format"
-      const ext = fileName.split('.').pop().toLowerCase();
-      let mimeType = 'text/plain;charset=utf-8';
-      if (ext === 'pdf') mimeType = 'application/pdf';
-      else if (ext === 'xlsx' || ext === 'xls') mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      else if (ext === 'docx' || ext === 'doc') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  
+      // Jika yang tersimpan adalah URL Google Drive, langsung buka di tab baru untuk diunduh
+      if (fileUrlOrName.startsWith("http://") || fileUrlOrName.startsWith("https://")) {
+        window.open(fileUrlOrName, '_blank');
+      } else {
+        // Fallback jika masih berupa nama file teks biasa
+        const element = document.createElement('a');
+        const ext = fileUrlOrName.split('.').pop().toLowerCase();
+        let mimeType = 'text/plain;charset=utf-8';
+        if (ext === 'pdf') mimeType = 'application/pdf';
+        else if (ext === 'xlsx' || ext === 'xls') mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        else if (ext === 'docx' || ext === 'doc') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-      const fileContent = "SIDSA SYSTEM GENERATED SECURE DOCUMENT BACKUP FOR: " + fileName;
-      const file = new Blob([fileContent], { type: mimeType });
-      element.href = URL.createObjectURL(file);
-      element.download = fileName;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
+        const fileContent = "SIDSA SYSTEM GENERATED SECURE DOCUMENT BACKUP FOR: " + fileUrlOrName;
+        const file = new Blob([fileContent], { type: mimeType });
+        element.href = URL.createObjectURL(file);
+        element.download = fileUrlOrName;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+      }
     }
-
     function renderPage(page) {
       const container = document.getElementById('pageContent');
       const searchBox = document.getElementById('adminSearchContainer');
