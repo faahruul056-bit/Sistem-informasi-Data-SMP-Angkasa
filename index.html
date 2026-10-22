@@ -2078,16 +2078,20 @@
       const noteInput = document.getElementById('note_' + npsn + '_' + docKey);
       const notes = noteInput ? noteInput.value : "";
 
-      if (school) {
-        if (!school.dokumenLaporan) school.dokumenLaporan = {};
-        if (!school.dokumenLaporan[docKey]) school.dokumenLaporan[docKey] = {};
+    if (school) {
+      if (!school.dokumenLaporan) school.dokumenLaporan = {};
+      if (!school.dokumenLaporan[docKey]) school.dokumenLaporan[docKey] = {};
 
-        school.dokumenLaporan[docKey].status = status;
-        school.dokumenLaporan[docKey].notes = notes;
+      school.dokumenLaporan[docKey].status = status;
+      school.dokumenLaporan[docKey].notes = notes;
 
-        saveDB();
-        renderSidebar();
-        renderPage('validasi');
+      saveDB();
+    
+      // --> TAMBAHKAN BARIS INI (DISINI REVISINYA) <--
+      syncToGoogleSheet(school, ta, "dokumen");
+
+      renderSidebar();
+      renderPage('validasi');
       }
     }
 
