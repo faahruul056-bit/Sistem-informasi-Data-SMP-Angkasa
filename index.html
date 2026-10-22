@@ -2053,46 +2053,50 @@
       return '<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4"><div class="border-b pb-3"><h3 class="font-bold text-slate-800 text-base">Persetujuan & Validasi Berkas Dokumen Wajib</h3><p class="text-xs text-slate-500">Lakukan verifikasi dan validasi pada Berkas Legalitas & Dokumen Laporan Wajib.</p></div><div class="space-y-6">' + itemsHtml + '</div></div>';
     }
 
-    function updateLegalitasDocStatus(npsn, legKey, status) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      const noteInput = document.getElementById('leg_note_' + npsn + '_' + legKey);
-      const notes = noteInput ? noteInput.value : "";
+function updateLegalitasDocStatus(npsn, legKey, status) {
+  const taList = Object.keys(db).sort().reverse();
+  const ta = document.getElementById('filterTA')?.value || taList[0];
+  const school = db[ta].find(s => s.npsn === npsn);
+  const noteInput = document.getElementById('leg_note_' + npsn + '_' + legKey);
+  const notes = noteInput ? noteInput.value : "";
 
-      if (school) {
-        if (!school.legalitas) school.legalitas = {};
-        school.legalitas['status' + legKey] = status;
-        school.legalitas['notes' + legKey] = notes;
+  if (school) {
+    if (!school.legalitas) school.legalitas = {};
+    school.legalitas['status' + legKey] = status;
+    school.legalitas['notes' + legKey] = notes;
 
-        saveDB();
-        renderSidebar();
-        renderPage('validasi');
-      }
-    }
-
-    function updateSingleDocStatus(npsn, docKey, status) {
-      const taList = Object.keys(db).sort().reverse();
-      const ta = document.getElementById('filterTA')?.value || taList[0];
-      const school = db[ta].find(s => s.npsn === npsn);
-      const noteInput = document.getElementById('note_' + npsn + '_' + docKey);
-      const notes = noteInput ? noteInput.value : "";
-
-    if (school) {
-      if (!school.dokumenLaporan) school.dokumenLaporan = {};
-      if (!school.dokumenLaporan[docKey]) school.dokumenLaporan[docKey] = {};
-
-      school.dokumenLaporan[docKey].status = status;
-      school.dokumenLaporan[docKey].notes = notes;
-
-      saveDB();
+    saveDB();
     
-      // --> TAMBAHKAN BARIS INI (DISINI REVISINYA) <--
-      syncToGoogleSheet(school, ta, "dokumen");
+    // [PENTING] Sinkronkan perubahan status legalitas ke Google Sheet cloud agar terbaca oleh sekolah
+    syncToGoogleSheet(school, ta, "identitas");
 
-      renderSidebar();
-      renderPage('validasi');
-      }
+    renderSidebar();
+    renderPage('validasi');
+  }
+}
+
+function updateSingleDocStatus(npsn, docKey, status) {
+  const taList = Object.keys(db).sort().reverse();
+  const ta = document.getElementById('filterTA')?.value || taList[0];
+  const school = db[ta].find(s => s.npsn === npsn);
+  const noteInput = document.getElementById('note_' + npsn + '_' + docKey);
+  const notes = noteInput ? noteInput.value : "";
+
+  if (school) {
+    if (!school.dokumenLaporan) school.dokumenLaporan = {};
+    if (!school.dokumenLaporan[docKey]) school.dokumenLaporan[docKey] = {};
+
+    school.dokumenLaporan[docKey].status = status;
+    school.dokumenLaporan[docKey].notes = notes;
+
+    saveDB();
+    
+    // [PENTING] Sinkronkan perubahan status dokumen laporan ke Google Sheet cloud agar terbaca oleh sekolah
+    syncToGoogleSheet(school, ta, "dokumen");
+
+    renderSidebar();
+    renderPage('validasi');
+  }
     }
 
     function showDetailModal(npsn) {
