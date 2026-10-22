@@ -264,7 +264,7 @@
       });
     }
 
-    function markSchoolDataUpdated(school, moduleName, moduleKey) {
+    function markSchoolDataUpdated(school, moduleName, moduleKey, skipSync = false) {
       const timeStr = new Date().toLocaleString('id-ID');
       school.lastUpdate = timeStr;
       school.hasDataRevision = true;
@@ -276,9 +276,12 @@
       if (moduleKey === 'keuangan') school.lastUpdateKeuangan = timeStr;
       if (moduleKey === 'dokumen') school.lastUpdateDokumen = timeStr;
 
-      const taList = Object.keys(db).sort().reverse();
-      const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
-      syncToGoogleSheet(school, currentTA, moduleKey); 
+      // Kunci perbaikannya di sini:
+      if (!skipSync) {
+        const taList = Object.keys(db).sort().reverse();
+        const currentTA = document.getElementById('filterTA')?.value || taList[0] || "2026-2027";
+        syncToGoogleSheet(school, currentTA, moduleKey); 
+      }
     }
 
     function syncAccountToSheet(accountObj) {
@@ -1260,8 +1263,8 @@
             school.legalitas.notesSKIzin = ""; 
           }
 
-          markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas");
-
+          markSchoolDataUpdated(school, "Identitas & Legalitas (Unggah Berkas)", "identitas", true)
+          
           const payload = {
             updatedModule: "identitas",
             kategoriFolder: katFolder,
@@ -1931,8 +1934,8 @@
             fileName: fileName
           };
 
-          markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen");
-
+          markSchoolDataUpdated(school, "Dokumen & Laporan", "dokumen", true);
+          
           const payload = {
             updatedModule: "dokumen",
             docKey: docKey,
