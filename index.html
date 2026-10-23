@@ -39,6 +39,12 @@
   <header class="bg-gradient-to-r from-blue-900 via-brand-blue to-blue-800 text-white shadow-lg sticky top-0 z-50 print:hidden border-b border-blue-700/50">
     <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center space-x-3.5">
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 bg-white/10 rounded-xl text-white border border-white/20">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        
+        <div class="flex items-center space-x-2 bg-white/10 p-1.5 rounded-xl...">
+          <!-- Logomu yang sudah ada -->
         <div class="flex items-center space-x-2 bg-white/10 p-1.5 rounded-xl border border-white/25 backdrop-blur-md shadow-inner">
           <img src="LOGO YASARINI_PNG.png" alt="Logo Yasarini" onerror="this.src='https://via.placeholder.com/40?text=YSR'" class="w-10 h-10 object-contain rounded-lg bg-white p-0.5 shadow">
           <img src="5. SMP.png" alt="Logo SMP Angkasa" onerror="this.src='https://via.placeholder.com/40?text=SMP'" class="w-10 h-10 object-contain rounded-lg bg-white p-0.5 shadow">
@@ -53,10 +59,12 @@
       <div class="flex items-center gap-3" id="topHeaderRightControls"></div>
     </div>
   </header>
+  <!-- OVERLAY UNTUK MOBILE MENU -->
+  <div id="sidebarBackdrop" onclick="toggleMobileMenu()" class="fixed inset-0 bg-slate-900/60 z-40 hidden md:hidden backdrop-blur-sm"></div>
 
   <div class="flex flex-1 max-w-7xl w-full mx-auto px-4 py-6 gap-6">
     <!-- SIDEBAR NAVIGATION -->
-    <aside class="w-64 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 shrink-0 hidden md:block print:hidden">
+    <aside id="mobileSidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl border-r border-slate-200/80 p-4 transform -translate-x-full md:relative md:translate-x-0 md:shadow-sm md:rounded-2xl md:border md:block transition-transform duration-300 ease-in-out print:hidden overflow-y-auto max-h-screen">
       <div class="mb-4 px-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Menu Utama</div>
       <nav class="space-y-1.5" id="sidebarMenu"></nav>
     </aside>
@@ -399,7 +407,18 @@
 
     let activeTab = 'dashboard';
     let db = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
-
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('mobileSidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  
+  if (sidebar.classList.contains('-translate-x-full')) {
+    sidebar.classList.remove('-translate-x-full');
+    backdrop.classList.remove('hidden');
+  } else {
+    sidebar.classList.add('-translate-x-full');
+    backdrop.classList.add('hidden');
+  }
+}
     if (db["2026/2027"]) {
       if (!db["2026-2027"] || db["2026-2027"].length === 0) {
         db["2026-2027"] = db["2026/2027"];
@@ -644,7 +663,12 @@
         if (item.roles.includes(role)) {
           const isActive = activeTab === item.id;
           const btn = document.createElement('button');
-          btn.onclick = () => { activeTab = item.id; renderSidebar(); renderPage(item.id); };
+          btn.onclick = () => { 
+            activeTab = item.id; 
+            renderSidebar(); 
+            renderPage(item.id); 
+            if(window.innerWidth < 768) toggleMobileMenu();
+          };
           btn.className = 'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition ' + (isActive ? 'bg-brand-blue text-white shadow-md shadow-brand-blue/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900');
           
           let badgeDot = '';
