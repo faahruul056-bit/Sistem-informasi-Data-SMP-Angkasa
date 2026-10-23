@@ -1993,13 +1993,31 @@ function toggleMobileMenu() {
       let totalValidDocs = 0;
       let totalDocSlots = TOTAL_SMP_ANGKASA * 9;
       
+      let countA = 0;
+      let countB = 0;
+      let countC = 0;
+      let countTT = 0;
+      let countBelum = 0;
+
       list.forEach(s => {
+        // Hitung dokumen valid
         if (s.dokumenLaporan) {
           Object.values(s.dokumenLaporan).forEach(d => {
             if (d.status === 'Valid') totalValidDocs++;
           });
         }
+        
+        // Hitung status akreditasi
+        if (s.akreditasi === 'A') countA++;
+        else if (s.akreditasi === 'B') countB++;
+        else if (s.akreditasi === 'C') countC++;
+        else if (s.akreditasi === 'TT' || s.akreditasi === 'D') countTT++;
+        else countBelum++;
       });
+
+      // Hitung selisih sekolah yang belum mendaftar sama sekali dari total kuota 15 SMP Angkasa
+      const unregisteredSchools = Math.max(0, TOTAL_SMP_ANGKASA - list.length);
+      countBelum += unregisteredSchools; 
 
       const complianceRate = totalDocSlots > 0 ? Math.round((totalValidDocs / totalDocSlots) * 100) : 0;
       let avgSiswaPerRombel = stats.totalRombel ? (stats.totalSiswa / stats.totalRombel).toFixed(1) : 0;
@@ -2025,7 +2043,49 @@ function toggleMobileMenu() {
       const compPendidik = getMinMax(an, 'pendidik', false);
       const compTendik = getMinMax(an, 'tendik', false);
 
-      return '<div class="space-y-6"><div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5"><div class="flex items-center justify-between border-b pb-3.5"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-brand-orange"></i> Analisis & Insight Eksekutif (Tertinggi vs Terendah)</h3><p class="text-xs text-slate-500">Perbandingan komparatif otomatis antar sekolah di lingkungan Yasarini.</p></div><span class="text-xs font-bold bg-amber-100 text-amber-900 px-3.5 py-1.5 rounded-full border border-amber-200">Executive View</span></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs"><div class="bg-blue-50/70 border border-blue-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Total Proyeksi Penerimaan/Thn</span><h4 class="text-lg font-black text-brand-blue">' + formatRupiah(stats.grandTotalPenerimaanThn) + '</h4></div><div class="bg-emerald-50/70 border border-emerald-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Kepatuhan Berkas Laporan</span><h4 class="text-lg font-black text-emerald-700">' + formatAngka(complianceRate) + '% Terverifikasi</h4></div><div class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Rata-Rata Siswa / Rombel</span><h4 class="text-lg font-black text-amber-700">' + avgSiswaPerRombel + ' Siswa</h4></div><div class="bg-purple-50/70 border border-purple-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Total Sekolah Terdata</span><h4 class="text-lg font-black text-purple-700">' + formatAngka(stats.totalSekolah) + ' Sekolah</h4></div></div>' +
+      const getPct = (count) => TOTAL_SMP_ANGKASA > 0 ? ((count / TOTAL_SMP_ANGKASA) * 100).toFixed(1) + '%' : '0%';
+
+      const akreditasiPanel = `
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b pb-2">
+            <h4 class="font-bold text-slate-800 text-xs flex items-center gap-2">
+              <i data-lucide="award" class="w-4 h-4 text-brand-blue"></i> PROFIL AKREDITASI SEKOLAH GLOBAL
+            </h4>
+            <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg border border-slate-200">Basis: 15 SMP Angkasa</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+            <div class="bg-emerald-50/50 border border-emerald-200 rounded-xl p-3">
+              <span class="block text-[11px] font-bold text-emerald-700 mb-1">A (Unggul)</span>
+              <div class="text-xl font-black text-emerald-800">${formatAngka(countA)}</div>
+              <div class="text-[10px] font-semibold text-emerald-600 mt-0.5">${getPct(countA)}</div>
+            </div>
+            <div class="bg-blue-50/50 border border-blue-200 rounded-xl p-3">
+              <span class="block text-[11px] font-bold text-brand-blue mb-1">B (Baik)</span>
+              <div class="text-xl font-black text-blue-800">${formatAngka(countB)}</div>
+              <div class="text-[10px] font-semibold text-blue-600 mt-0.5">${getPct(countB)}</div>
+            </div>
+            <div class="bg-amber-50/50 border border-amber-200 rounded-xl p-3">
+              <span class="block text-[11px] font-bold text-amber-700 mb-1">C (Cukup Baik)</span>
+              <div class="text-xl font-black text-amber-800">${formatAngka(countC)}</div>
+              <div class="text-[10px] font-semibold text-amber-600 mt-0.5">${getPct(countC)}</div>
+            </div>
+            <div class="bg-rose-50/50 border border-rose-200 rounded-xl p-3">
+              <span class="block text-[11px] font-bold text-rose-700 mb-1">Tidak Terakreditasi</span>
+              <div class="text-xl font-black text-rose-800">${formatAngka(countTT)}</div>
+              <div class="text-[10px] font-semibold text-rose-600 mt-0.5">${getPct(countTT)}</div>
+            </div>
+            <div class="bg-slate-50/50 border border-slate-200 rounded-xl p-3">
+              <span class="block text-[11px] font-bold text-slate-700 mb-1">Belum Mengisi</span>
+              <div class="text-xl font-black text-slate-800">${formatAngka(countBelum)}</div>
+              <div class="text-[10px] font-semibold text-slate-500 mt-0.5">${getPct(countBelum)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      return '<div class="space-y-6"><div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5"><div class="flex items-center justify-between border-b pb-3.5"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-brand-orange"></i> Analisis & Insight Eksekutif</h3><p class="text-xs text-slate-500">Perbandingan komparatif otomatis antar sekolah di lingkungan Yasarini.</p></div><span class="text-xs font-bold bg-amber-100 text-amber-900 px-3.5 py-1.5 rounded-full border border-amber-200">Executive View</span></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs"><div class="bg-blue-50/70 border border-blue-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Total Proyeksi Penerimaan/Thn</span><h4 class="text-lg font-black text-brand-blue">' + formatRupiah(stats.grandTotalPenerimaanThn) + '</h4></div><div class="bg-emerald-50/70 border border-emerald-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Kepatuhan Berkas Laporan</span><h4 class="text-lg font-black text-emerald-700">' + formatAngka(complianceRate) + '% Terverifikasi</h4></div><div class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Rata-Rata Siswa / Rombel</span><h4 class="text-lg font-black text-amber-700">' + avgSiswaPerRombel + ' Siswa</h4></div><div class="bg-purple-50/70 border border-purple-200 p-4 rounded-2xl space-y-1"><span class="text-slate-500 font-semibold block">Total Sekolah Terdata</span><h4 class="text-lg font-black text-purple-700">' + formatAngka(stats.totalSekolah) + ' Sekolah</h4></div></div>' +
+      
+      akreditasiPanel + 
       
       '<div class="border-t pt-4 space-y-3"><h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="trending-up" class="w-4 h-4 text-brand-blue"></i> Komparasi Tertinggi & Terendah per Komponen Sekolah</h4>' +
       '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">' +
@@ -2037,7 +2097,6 @@ function toggleMobileMenu() {
         '<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2"><span class="font-bold text-slate-700 block border-b pb-1">Jumlah Tenaga Kependidikan</span><div class="text-[11px] text-emerald-700"><strong>Tertinggi:</strong> ' + compTendik.max + '</div><div class="text-[11px] text-rose-600"><strong>Terendah:</strong> ' + compTendik.min + '</div></div>' +
       '</div></div></div></div>';
     }
-
     function renderValidasiModule(list) {
       let itemsHtml = '';
       if (list.length === 0) {
