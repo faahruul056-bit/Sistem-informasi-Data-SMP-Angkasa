@@ -277,21 +277,6 @@
       const userVal = document.getElementById('loginUser').value.trim();
       const passVal = document.getElementById('loginPass').value.trim();
 
-      if ((userVal === "admin" && passVal === "admin123") || (userVal === "pimpinan" && passVal === "pimpinan123")) {
-        const adminSession = {
-          user: userVal,
-          pass: passVal,
-          nama: userVal === "admin" ? "ADMIN PUSAT YASARINI" : "PIMPINAN YASARINI PUSAT",
-          role: userVal === "admin" ? "ADMIN" : "PIMPINAN",
-          npsn: "PUSAT",
-          cabang: "Pusat"
-        };
-        localStorage.setItem('sidsa_session_v10', JSON.stringify(adminSession));
-        alert('Login Berhasil sebagai ' + adminSession.nama);
-        window.location.href = 'index.html';
-        return;
-      }
-
       const loginUrl = `${GOOGLE_SHEET_WEB_APP_URL}?action=login&username=${encodeURIComponent(userVal)}&password=${encodeURIComponent(passVal)}`;
 
       fetch(loginUrl)
