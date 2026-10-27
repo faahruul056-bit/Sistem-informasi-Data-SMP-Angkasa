@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Informasi Data SMP Angkasa (SIDSA)</title>
+  <title>SiData SMP Angkasa (Sistem Informasi Data SMP Angkasa)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -49,7 +49,7 @@
         </div>
         <div>
           <h1 class="font-black text-base lg:text-lg leading-tight tracking-wide flex items-center gap-1.5">
-            SIDSA
+            SiData
           </h1>
           <p class="text-xs text-blue-100 font-medium">Sistem Informasi Data SMP Angkasa</p>
         </div>
@@ -2313,7 +2313,7 @@ function updateSingleDocStatus(npsn, docKey, status) {
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", "Rekap_Data_SIDSA_TA_" + ta.replace('-', '_') + ".csv");
+      link.setAttribute("download", "Rekap_Data_SiData_TA_" + ta.replace('-', '_') + ".csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
