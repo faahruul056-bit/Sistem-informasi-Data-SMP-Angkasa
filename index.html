@@ -608,8 +608,34 @@ function toggleMobileMenu() {
         .then(resData => {
           if (resData && resData.status === "success") {
             if (resData.db && Object.keys(resData.db).length > 0) {
-              db = resData.db;
+              
+              // === MERGE METADATA (Pertahankan Timestamp Lokal) ===
+              const incomingDb = resData.db;
+              const localDb = JSON.parse(localStorage.getItem('sidsa_db_v10')) || {};
+              
+              Object.keys(incomingDb).forEach(ta => {
+                if (localDb[ta]) {
+                  incomingDb[ta].forEach(incSchool => {
+                    const locSchool = localDb[ta].find(s => s.npsn === incSchool.npsn);
+                    if (locSchool) {
+                      // Salin riwayat waktu lokal ke data baru dari server
+                      incSchool.lastUpdate = incSchool.timestamp || locSchool.lastUpdate || "-";
+                      incSchool.lastUpdateIdentitas = locSchool.lastUpdateIdentitas || "";
+                      incSchool.lastUpdateSiswa = locSchool.lastUpdateSiswa || "";
+                      incSchool.lastUpdatePendidik = locSchool.lastUpdatePendidik || "";
+                      incSchool.lastUpdateKeuangan = locSchool.lastUpdateKeuangan || "";
+                      incSchool.lastUpdateDokumen = locSchool.lastUpdateDokumen || "";
+                      incSchool.hasDataRevision = locSchool.hasDataRevision || false;
+                      incSchool.lastUpdatedModule = locSchool.lastUpdatedModule || "";
+                    }
+                  });
+                }
+              });
+
+              db = incomingDb;
               localStorage.setItem('sidsa_db_v10', JSON.stringify(db));
+              // ====================================================
+
             }
             if (resData.akun && Array.isArray(resData.akun) && resData.akun.length > 0) {
               localStorage.setItem('sidsa_users_v10', JSON.stringify(resData.akun));
