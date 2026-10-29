@@ -579,7 +579,6 @@ function toggleMobileMenu() {
       let html = '';
       if (isAdmin) {
         html += '<button onclick="openManageUsersModal()" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl border border-emerald-400/30 transition flex items-center gap-1 shadow-sm"><i data-lucide="users-round" class="w-3.5 h-3.5"></i> Manajemen Akun</button>';
-        html += '<button onclick="resetDataDemo()" class="text-xs font-semibold bg-blue-700/60 hover:bg-blue-700 text-blue-100 px-3 py-1.5 rounded-xl border border-blue-400/30 transition flex items-center gap-1"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Database</button>';
       }
 
       const roleLabel = currentSession.role === 'SEKOLAH' ? 'Sekolah (NPSN: ' + currentSession.npsn + ')' : currentSession.role;
