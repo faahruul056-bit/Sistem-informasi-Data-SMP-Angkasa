@@ -142,7 +142,7 @@
       </div>
       <div id="docModalBody" class="flex-1 bg-slate-100 rounded-xl p-4 overflow-y-auto min-h-[300px] flex items-center justify-center border border-slate-200"></div>
       <div class="flex justify-between items-center border-t pt-3 text-xs">
-        <span class="text-slate-400 font-medium">SIDSA File Viewer Mode</span>
+        <span class="text-slate-400 font-medium">SiDataSMPAngkasa File Viewer Mode</span>
         <div class="flex items-center gap-2">
           <button id="docModalDownloadBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
             <i data-lucide="download" class="w-4 h-4"></i> Unduh File Berkas
@@ -1001,7 +1001,7 @@ function toggleMobileMenu() {
         else if (ext === 'xlsx' || ext === 'xls') mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         else if (ext === 'docx' || ext === 'doc') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-        const fileContent = "SIDSA SYSTEM GENERATED SECURE DOCUMENT BACKUP FOR: " + fileUrlOrName;
+        const fileContent = "SiDataSMPAngkasa SYSTEM GENERATED SECURE DOCUMENT BACKUP FOR: " + fileUrlOrName;
         const file = new Blob([fileContent], { type: mimeType });
         element.href = URL.createObjectURL(file);
         element.download = fileUrlOrName;
